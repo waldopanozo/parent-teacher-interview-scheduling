@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/InterviewScheduling.Api/InterviewScheduling.Api.csproj" />
+  </Folder>
+</Solution>
