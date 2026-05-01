@@ -1,0 +1,18 @@
+<div class="shell">
+  <header class="top">
+    <div class="brand">PTA Interviews</div>
+    <nav class="nav">
+      <a *ngIf="auth.profile()?.role === 0" routerLink="/app/parent" routerLinkActive="active">Parent</a>
+      <a *ngIf="auth.profile()?.role === 1" routerLink="/app/teacher" routerLinkActive="active">Teacher</a>
+      <a *ngIf="auth.profile()?.role === 2" routerLink="/app/director" routerLinkActive="active">Director</a>
+    </nav>
+    <div class="user">
+      <span class="name">{{ auth.profile()?.displayName }}</span>
+      <button type="button" class="link" (click)="auth.logout()">Sign out</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <router-outlet />
+  </main>
+</div>

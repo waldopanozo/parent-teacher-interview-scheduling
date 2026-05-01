@@ -1,0 +1,79 @@
+<section class="panel">
+  <h2>Parent workspace</h2>
+  <p class="muted">Book a 15-minute interview with a teacher who published availability for that subject and grade.</p>
+  <p class="muted">
+    <a routerLink="/app/parent/meeting-profile">Meeting registration</a>
+    (student email, attendee name, relationship) ·
+    <a routerLink="/app/parent/request-teacher">Request teacher access</a>
+    — director approval required; you will sign in again after approval.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Book a slot</h3>
+
+      <label class="field">
+        <span>Teacher offering</span>
+        <select [(ngModel)]="selectedOfferingId" (ngModelChange)="loadSlots()">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let o of offerings" [ngValue]="o.id">
+            {{ o.teacherDisplayName }} — {{ o.subjectName }} ({{ o.courseTitle }}, grade {{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', section ' + o.sectionLabel : '' }})
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Date (school calendar)</span>
+        <input type="date" [(ngModel)]="interviewDate" (change)="loadSlots()" />
+      </label>
+
+      <button type="button" class="btn secondary" (click)="loadSlots()">Refresh slots</button>
+
+      <div class="slots" *ngIf="slots.length">
+        <div class="slot" *ngFor="let s of slots">
+          <div>
+            <div class="time">{{ s.startUtc | date : 'short' }}</div>
+            <div class="muted small">UTC</div>
+          </div>
+          <button type="button" class="btn" (click)="book(s)">Reserve</button>
+        </div>
+      </div>
+
+      <p class="muted" *ngIf="selectedOfferingId && interviewDate && !slots.length">No open slots for that day.</p>
+    </div>
+
+    <div class="card">
+      <h3>Your bookings</h3>
+      <table *ngIf="bookings.length; else empty">
+        <thead>
+          <tr>
+            <th>When (UTC)</th>
+            <th>Teacher</th>
+            <th>Subject</th>
+            <th>Attendee</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bookings">
+            <td>{{ b.startUtc | date : 'short' }}</td>
+            <td>{{ b.teacherDisplayName }}</td>
+            <td>
+              {{ b.subjectName }} — {{ b.courseTitle
+              }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
+            <td>
+              {{ b.interviewAttendeeName }} ({{ b.relationshipToStudent }})<br />
+              <span class="muted small">Student: {{ b.studentSchoolEmail }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #empty>
+        <p class="muted">No bookings yet.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <p class="status" *ngIf="status">{{ status }}</p>
+</section>

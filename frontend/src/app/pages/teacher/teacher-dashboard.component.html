@@ -1,0 +1,109 @@
+<section class="panel">
+  <h2>Teacher workspace</h2>
+  <p class="muted">
+    Create one offering per subject/course/grade combination. Parents book fixed 15-minute slots inside the weekly
+    windows you publish.
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Create offering</h3>
+
+      <label class="field">
+        <span>Subject</span>
+        <select [(ngModel)]="subjectId">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let s of subjects" [ngValue]="s.id">{{ s.name }} ({{ s.code }})</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Course title</span>
+        <input [(ngModel)]="courseTitle" placeholder="e.g. Algebra II" />
+      </label>
+
+      <label class="field">
+        <span>Grade level</span>
+        <input [(ngModel)]="gradeLevel" placeholder="e.g. 10" />
+      </label>
+
+      <label class="field">
+        <span>Section (optional)</span>
+        <input [(ngModel)]="sectionLabel" placeholder="e.g. A, C, 3ro-A" />
+      </label>
+
+      <button type="button" class="btn" (click)="createOffering()">Save offering</button>
+    </div>
+
+    <div class="card">
+      <h3>Weekly availability</h3>
+      <p class="muted small">
+        This replaces all weekly windows for the selected offering. Use 24h HH:mm times in the school time zone.
+      </p>
+
+      <label class="field">
+        <span>Offering</span>
+        <select [(ngModel)]="availabilityOfferingId">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let o of offerings" [ngValue]="o.id">
+            {{ o.subjectName }} — {{ o.courseTitle }} (grade {{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
+          </option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>Day of week</span>
+        <select [(ngModel)]="dayOfWeek">
+          <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
+        </select>
+      </label>
+
+      <div class="row">
+        <label class="field">
+          <span>Start</span>
+          <input [(ngModel)]="startLocal" />
+        </label>
+        <label class="field">
+          <span>End</span>
+          <input [(ngModel)]="endLocal" />
+        </label>
+      </div>
+
+      <button type="button" class="btn secondary" (click)="publishAvailability()">Save weekly window</button>
+    </div>
+
+    <div class="card wide">
+      <h3>Upcoming bookings</h3>
+      <table *ngIf="bookings.length; else empty">
+        <thead>
+          <tr>
+            <th>When (UTC)</th>
+            <th>Parent account</th>
+            <th>Subject</th>
+            <th>Attendee at interview</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bookings">
+            <td>{{ b.startUtc | date : 'short' }}</td>
+            <td>{{ b.parentDisplayName }} ({{ b.parentEmail }})</td>
+            <td>
+              {{ b.subjectName }} — {{ b.courseTitle
+              }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
+            <td>
+              {{ b.interviewAttendeeName }} — {{ b.relationshipToStudent }}<br />
+              <span class="muted small">Student email: {{ b.studentSchoolEmail }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #empty>
+        <p class="muted">No bookings yet.</p>
+      </ng-template>
+    </div>
+  </div>
+
+  <p class="status" *ngIf="status">{{ status }}</p>
+</section>
