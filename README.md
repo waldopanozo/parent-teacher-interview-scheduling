@@ -148,7 +148,7 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 
 - **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer.
 - **Frontend**: Angular (standalone, lazy routes), Google Identity Services.
-- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) runs `dotnet build` and `npm run build` on pushes to **`main`** and **`dev`**, and on **pull requests** targeting those branches.
+- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) runs `dotnet build` and `npm run build` only on **push** to **`main`** (not on pull requests).
 
 ## License
 
