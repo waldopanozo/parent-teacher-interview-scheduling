@@ -6,6 +6,8 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: AppRoleNumber;
+  /** Present for Parent after API update; must be true before booking. */
+  meetingProfileComplete?: boolean;
 }
 
 export interface AuthResponse {
@@ -43,9 +45,18 @@ export interface Booking {
   courseTitle: string;
   gradeLevel: string;
   sectionLabel: string;
+  studentSchoolEmail: string;
+  interviewAttendeeName: string;
+  relationshipToStudent: string;
   teacherDisplayName: string;
   parentDisplayName: string;
   parentEmail: string;
+}
+
+export interface ParentMeetingProfile {
+  studentSchoolEmail: string | null;
+  interviewAttendeeName: string | null;
+  relationshipToStudent: string | null;
 }
 
 export interface TeacherListItem {

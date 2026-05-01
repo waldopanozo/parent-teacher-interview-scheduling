@@ -34,6 +34,17 @@ export const teacherRoleGuard: CanActivateFn = () => {
   return false;
 };
 
+/** Parents must save student + attendee + relationship before other parent routes (except the form itself). */
+export const parentMeetingProfileGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  if (auth.roleName() !== 'Parent') return true;
+  if (auth.isParentMeetingProfileComplete()) return true;
+  if (router.url.includes('/parent/meeting-profile')) return true;
+  void router.navigateByUrl('/app/parent/meeting-profile');
+  return false;
+};
+
 export const directorRoleGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

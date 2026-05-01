@@ -22,6 +22,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.Property(x => x.Email).HasMaxLength(320);
             e.Property(x => x.DisplayName).HasMaxLength(200);
             e.Property(x => x.GoogleSub).HasMaxLength(128);
+            e.Property(x => x.StudentSchoolEmail).HasMaxLength(320);
+            e.Property(x => x.InterviewAttendeeName).HasMaxLength(200);
+            e.Property(x => x.RelationshipToStudent).HasMaxLength(120);
         });
 
         modelBuilder.Entity<Subject>(e =>
@@ -60,6 +63,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<Booking>(e =>
         {
             e.HasKey(x => x.Id);
+            e.Property(x => x.StudentSchoolEmail).HasMaxLength(320);
+            e.Property(x => x.InterviewAttendeeName).HasMaxLength(200);
+            e.Property(x => x.RelationshipToStudent).HasMaxLength(120);
             e.HasIndex(x => new { x.TeacherOfferingId, x.StartUtc }).IsUnique();
             e.HasOne(x => x.TeacherOffering).WithMany(x => x.Bookings).HasForeignKey(x => x.TeacherOfferingId)
                 .OnDelete(DeleteBehavior.Cascade);

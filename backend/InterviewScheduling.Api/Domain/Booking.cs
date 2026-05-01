@@ -10,4 +10,13 @@ public sealed class Booking
     public DateTime StartUtc { get; set; }
     public DateTime EndUtc { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+
+    /// <summary>Copy of student identifier at booking time.</summary>
+    public string StudentSchoolEmail { get; set; } = "";
+
+    /// <summary>Copy of attendee name at booking time.</summary>
+    public string InterviewAttendeeName { get; set; } = "";
+
+    /// <summary>Copy of relationship at booking time.</summary>
+    public string RelationshipToStudent { get; set; } = "";
 }

@@ -60,9 +60,19 @@ export class LoginComponent implements AfterViewInit {
     this.auth.signInWithGoogleIdToken(idToken).subscribe({
       next: () => {
         const role = this.auth.roleName();
-        const path =
-          role === 'Teacher' ? '/app/teacher' : role === 'Director' ? '/app/director' : '/app/parent';
-        void this.router.navigateByUrl(path);
+        if (role === 'Teacher') {
+          void this.router.navigateByUrl('/app/teacher');
+          return;
+        }
+        if (role === 'Director') {
+          void this.router.navigateByUrl('/app/director');
+          return;
+        }
+        if (role === 'Parent' && !this.auth.isParentMeetingProfileComplete()) {
+          void this.router.navigateByUrl('/app/parent/meeting-profile');
+          return;
+        }
+        void this.router.navigateByUrl('/app/parent');
       },
       error: (err) => {
         const msg = err?.error?.message ?? err?.message ?? 'Sign-in failed.';

@@ -15,8 +15,18 @@ export class RoleRedirectComponent implements OnInit {
 
   ngOnInit(): void {
     const role = this.auth.roleName();
-    const target =
-      role === 'Teacher' ? '/app/teacher' : role === 'Director' ? '/app/director' : '/app/parent';
-    void this.router.navigateByUrl(target);
+    if (role === 'Teacher') {
+      void this.router.navigateByUrl('/app/teacher');
+      return;
+    }
+    if (role === 'Director') {
+      void this.router.navigateByUrl('/app/director');
+      return;
+    }
+    if (role === 'Parent' && !this.auth.isParentMeetingProfileComplete()) {
+      void this.router.navigateByUrl('/app/parent/meeting-profile');
+      return;
+    }
+    void this.router.navigateByUrl('/app/parent');
   }
 }

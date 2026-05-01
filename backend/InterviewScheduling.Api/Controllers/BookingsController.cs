@@ -37,6 +37,8 @@ public sealed class BookingsController(BookingService bookingService) : Controll
         }
         catch (InvalidOperationException ex)
         {
+            if (ex.Message.Contains("Complete your meeting profile", StringComparison.Ordinal))
+                return BadRequest(new { message = ex.Message });
             return Conflict(new { message = ex.Message });
         }
     }

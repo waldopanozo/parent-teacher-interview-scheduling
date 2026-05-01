@@ -2,8 +2,10 @@
   <h2>Parent workspace</h2>
   <p class="muted">Book a 15-minute interview with a teacher who published availability for that subject and grade.</p>
   <p class="muted">
+    <a routerLink="/app/parent/meeting-profile">Meeting registration</a>
+    (student email, attendee name, relationship) ·
     <a routerLink="/app/parent/request-teacher">Request teacher access</a>
-    — ask the director to approve your account as a teacher (you will sign in again after approval).
+    — director approval required; you will sign in again after approval.
   </p>
 
   <div class="grid">
@@ -49,6 +51,7 @@
             <th>When (UTC)</th>
             <th>Teacher</th>
             <th>Subject</th>
+            <th>Attendee</th>
           </tr>
         </thead>
         <tbody>
@@ -58,6 +61,10 @@
             <td>
               {{ b.subjectName }} — {{ b.courseTitle
               }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
+            <td>
+              {{ b.interviewAttendeeName }} ({{ b.relationshipToStudent }})<br />
+              <span class="muted small">Student: {{ b.studentSchoolEmail }}</span>
             </td>
           </tr>
         </tbody>

@@ -63,3 +63,15 @@ public sealed class CreateBookingRequest
     public Guid TeacherOfferingId { get; set; }
     public DateTime StartUtc { get; set; }
 }
+
+public sealed class UpsertParentMeetingProfileRequest
+{
+    /// <summary>Student school or institutional email (parent may use a different Google account).</summary>
+    public string StudentSchoolEmail { get; set; } = "";
+
+    /// <summary>Full name of the person who will attend the interview.</summary>
+    public string InterviewAttendeeName { get; set; } = "";
+
+    /// <summary>Relationship to the student (e.g. mother, father, guardian).</summary>
+    public string RelationshipToStudent { get; set; } = "";
+}
