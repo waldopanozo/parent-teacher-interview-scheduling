@@ -8,6 +8,7 @@ using InterviewScheduling.Api.Domain;
 using InterviewScheduling.Api.Services;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace InterviewScheduling.Api.Tests;
@@ -107,7 +108,7 @@ public sealed class ParentMeetingProfileApiTests : IClassFixture<ApiWebApplicati
         using var scope = factory.Services.CreateScope();
         var jwt = scope.ServiceProvider.GetRequiredService<JwtTokenService>();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var email = db.Users.AsNoTracking().Where(u => u.Id == userId).Select(u => u.Email).First();
-        return jwt.CreateAccessToken(userId, email, AppRole.Parent);
+        var user = db.Users.AsNoTracking().First(u => u.Id == userId);
+        return jwt.CreateAccessToken(userId, user.Email, AppRole.Parent);
     }
 }
