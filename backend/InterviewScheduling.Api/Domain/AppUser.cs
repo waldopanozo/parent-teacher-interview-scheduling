@@ -4,6 +4,9 @@ public sealed class AppUser
 {
     public Guid Id { get; set; }
     public string GoogleSub { get; set; } = "";
+    /// <summary>BCrypt hash for email/password sign-in; null when the user only uses Google.</summary>
+    public string? PasswordHash { get; set; }
+
     public string Email { get; set; } = "";
     public string DisplayName { get; set; } = "";
     public AppRole Role { get; set; }

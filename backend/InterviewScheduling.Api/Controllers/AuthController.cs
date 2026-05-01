@@ -30,6 +30,38 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         }
     }
 
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequest body, CancellationToken ct)
+    {
+        try
+        {
+            var result = await authService.RegisterWithPasswordAsync(body.Email, body.Password, body.DisplayName, ct);
+            return Ok(new AuthResponseDto(result.AccessToken, result.ExpiresAtUtc, result.User));
+        }
+        catch (AuthException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("email-login")]
+    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthResponseDto>> EmailLogin([FromBody] EmailLoginRequest body, CancellationToken ct)
+    {
+        try
+        {
+            var result = await authService.SignInWithPasswordAsync(body.Email, body.Password, ct);
+            return Ok(new AuthResponseDto(result.AccessToken, result.ExpiresAtUtc, result.User));
+        }
+        catch (AuthException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]

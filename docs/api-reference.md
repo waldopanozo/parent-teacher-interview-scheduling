@@ -12,6 +12,8 @@ Unless noted, requests send header `Authorization: Bearer <jwt>`.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/api/v1/auth/google` | No | Body: `{ "idToken": "<google credential>" }`. Returns access token + user profile (`role`: Parent=0, Teacher=1, Director=2; `meetingProfileComplete` for parents). |
+| POST | `/api/v1/auth/register` | No | Body: `{ "email", "password" (min 8), "displayName" }`. Same domain/bootstrap rules as Google. **400** with `{ "message" }` on validation/conflict. |
+| POST | `/api/v1/auth/email-login` | No | Body: `{ "email", "password" }`. **401** with `{ "message" }` if invalid. |
 | GET | `/api/v1/auth/me` | Yes | Current user profile (same shape as login `user`, including `meetingProfileComplete`). |
 
 ## Catalog (authenticated)

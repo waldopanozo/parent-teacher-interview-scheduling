@@ -22,6 +22,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.Property(x => x.Email).HasMaxLength(320);
             e.Property(x => x.DisplayName).HasMaxLength(200);
             e.Property(x => x.GoogleSub).HasMaxLength(128);
+            e.Property(x => x.PasswordHash).HasMaxLength(200);
             e.Property(x => x.StudentSchoolEmail).HasMaxLength(320);
             e.Property(x => x.InterviewAttendeeName).HasMaxLength(200);
             e.Property(x => x.RelationshipToStudent).HasMaxLength(120);

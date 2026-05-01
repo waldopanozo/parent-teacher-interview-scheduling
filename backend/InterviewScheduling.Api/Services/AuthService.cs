@@ -59,6 +59,14 @@ public sealed class AuthService(
         var user = await db.Users.FirstOrDefaultAsync(u => u.GoogleSub == sub, ct);
         if (user is null)
         {
+            var emailKey = email.Trim().ToLowerInvariant();
+            var taken = await db.Users.AsNoTracking().AnyAsync(
+                u => u.Email.ToLower() == emailKey && u.GoogleSub != sub,
+                ct);
+            if (taken)
+                throw new AuthException(
+                    "This email is already registered with email and password. Sign in that way instead.");
+
             var role = ResolveBootstrapRole(email);
             user = new AppUser
             {
@@ -78,6 +86,68 @@ public sealed class AuthService(
             user.Email = email;
             await db.SaveChangesAsync(ct);
         }
+
+        var token = jwtTokenService.CreateAccessToken(user.Id, user.Email, user.Role);
+        var expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);
+        return new AuthResult(token, expires, MapUserProfile(user));
+    }
+
+    public async Task<AuthResult> RegisterWithPasswordAsync(string email, string password, string displayName,
+        CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_jwt.SigningKey))
+            throw new InvalidOperationException("Jwt:SigningKey is not configured.");
+
+        email = email.Trim();
+        displayName = displayName.Trim();
+        if (email.Length == 0)
+            throw new AuthException("Email is required.");
+        if (displayName.Length == 0)
+            throw new AuthException("Username is required.");
+        if (password.Length < 8)
+            throw new AuthException("Password must be at least 8 characters.");
+
+        if (!IsAllowedSignInEmail(email, hostedDomain: null))
+            throw new AuthException("Email address is not permitted for this school configuration.");
+
+        var emailKey = email.ToLowerInvariant();
+        var exists = await db.Users.AsNoTracking().AnyAsync(u => u.Email.ToLower() == emailKey, ct);
+        if (exists)
+            throw new AuthException("An account with this email already exists.");
+
+        var role = ResolveBootstrapRole(email);
+        var user = new AppUser
+        {
+            Id = Guid.NewGuid(),
+            GoogleSub = "local:" + Guid.NewGuid().ToString("N"),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+            Email = email,
+            DisplayName = displayName,
+            Role = role,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync(ct);
+
+        var token = jwtTokenService.CreateAccessToken(user.Id, user.Email, user.Role);
+        var expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);
+        return new AuthResult(token, expires, MapUserProfile(user));
+    }
+
+    public async Task<AuthResult> SignInWithPasswordAsync(string email, string password, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_jwt.SigningKey))
+            throw new InvalidOperationException("Jwt:SigningKey is not configured.");
+
+        email = email.Trim();
+        if (email.Length == 0 || password.Length == 0)
+            throw new AuthException("Invalid email or password.");
+
+        var emailKey = email.ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == emailKey, ct);
+        if (user is null || user.PasswordHash is null ||
+            !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            throw new AuthException("Invalid email or password.");
 
         var token = jwtTokenService.CreateAccessToken(user.Id, user.Email, user.Role);
         var expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);

@@ -7,6 +7,19 @@ public sealed class GoogleSignInRequest
     public string IdToken { get; set; } = "";
 }
 
+public sealed class RegisterRequest
+{
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+}
+
+public sealed class EmailLoginRequest
+{
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+}
+
 public sealed class CreateTeacherOfferingRequest
 {
     public Guid SubjectId { get; set; }
