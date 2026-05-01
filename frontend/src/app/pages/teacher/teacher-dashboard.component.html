@@ -79,8 +79,9 @@
         <thead>
           <tr>
             <th>When (UTC)</th>
-            <th>Parent</th>
+            <th>Parent account</th>
             <th>Subject</th>
+            <th>Attendee at interview</th>
           </tr>
         </thead>
         <tbody>
@@ -90,6 +91,10 @@
             <td>
               {{ b.subjectName }} — {{ b.courseTitle
               }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
+            <td>
+              {{ b.interviewAttendeeName }} — {{ b.relationshipToStudent }}<br />
+              <span class="muted small">Student email: {{ b.studentSchoolEmail }}</span>
             </td>
           </tr>
         </tbody>

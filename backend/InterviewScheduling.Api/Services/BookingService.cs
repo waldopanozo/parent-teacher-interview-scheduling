@@ -19,6 +19,13 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         try
         {
+            var parent = await db.Users.FirstOrDefaultAsync(u => u.Id == parentUserId, ct);
+            if (parent is null)
+                throw new KeyNotFoundException("Parent not found.");
+            if (!MeetingProfileValidation.IsComplete(parent))
+                throw new InvalidOperationException(
+                    "Complete your meeting profile (student school email, attendee name, relationship to student) before booking.");
+
             var offering = await db.TeacherOfferings
                 .Include(o => o.WeeklyAvailabilities)
                 .FirstOrDefaultAsync(o => o.Id == teacherOfferingId, ct);
@@ -43,7 +50,10 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
                 ParentUserId = parentUserId,
                 StartUtc = startUtc,
                 EndUtc = endUtc,
-                CreatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTimeOffset.UtcNow,
+                StudentSchoolEmail = parent.StudentSchoolEmail!,
+                InterviewAttendeeName = parent.InterviewAttendeeName!,
+                RelationshipToStudent = parent.RelationshipToStudent!
             };
             db.Bookings.Add(booking);
             await db.SaveChangesAsync(ct);
@@ -122,6 +132,9 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
             o.CourseTitle,
             o.GradeLevel,
             o.SectionLabel,
+            b.StudentSchoolEmail,
+            b.InterviewAttendeeName,
+            b.RelationshipToStudent,
             o.Teacher.DisplayName,
             b.Parent.DisplayName,
             b.Parent.Email);
@@ -136,6 +149,9 @@ public sealed record BookingDto(
     string CourseTitle,
     string GradeLevel,
     string SectionLabel,
+    string StudentSchoolEmail,
+    string InterviewAttendeeName,
+    string RelationshipToStudent,
     string TeacherDisplayName,
     string ParentDisplayName,
     string ParentEmail);

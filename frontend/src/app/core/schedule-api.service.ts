@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {
   Booking,
+  ParentMeetingProfile,
   Slot,
   SubjectSummary,
   TeacherAccessRequestListItem,
@@ -39,6 +40,18 @@ export class ScheduleApiService {
 
   submitTeacherAccessRequest(body: { message?: string }) {
     return this.http.post<void>(`${this.base}/teacher-access-requests`, body);
+  }
+
+  getMeetingProfile() {
+    return this.http.get<ParentMeetingProfile>(`${this.base}/parent/meeting-profile`);
+  }
+
+  putMeetingProfile(body: {
+    studentSchoolEmail: string;
+    interviewAttendeeName: string;
+    relationshipToStudent: string;
+  }) {
+    return this.http.put<void>(`${this.base}/parent/meeting-profile`, body);
   }
 
   teacherOfferings() {

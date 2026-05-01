@@ -9,9 +9,16 @@
 
 Existing users keep their stored role; bootstrap lists only apply when the account is **created**.
 
+## Parent meeting registration (before booking)
+
+1. Parent signs in with **Google** (their own account).
+2. Complete **Meeting registration** (`/app/parent/meeting-profile`): student’s **school email**, **name of the adult attending**, and **relationship** to the student.
+3. The API sets `meetingProfileComplete` on the user profile; the SPA blocks the parent dashboard and booking until this is done.
+4. Each **booking** stores a copy of those three fields for the teacher’s roster.
+
 ## Parent → Teacher via access request
 
-1. User signs in as **Parent**.
+1. User signs in as **Parent** with meeting profile already complete.
 2. Opens **Request teacher access** (`/app/parent/request-teacher`), optionally adds a message, submits.
 3. A **Director** opens the Director workspace, sees the request, **Approve** or **Reject**.
 4. If **approved**, the database role becomes **Teacher**, but the current JWT still says Parent until the user **signs out and signs in again**.

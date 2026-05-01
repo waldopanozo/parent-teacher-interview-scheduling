@@ -81,8 +81,17 @@ public sealed class AuthService(
 
         var token = jwtTokenService.CreateAccessToken(user.Id, user.Email, user.Role);
         var expires = DateTime.UtcNow.AddMinutes(_jwt.AccessTokenMinutes);
-        return new AuthResult(token, expires, new UserProfileDto(user.Id, user.Email, user.DisplayName, user.Role));
+        return new AuthResult(token, expires, MapUserProfile(user));
     }
+
+    public async Task<UserProfileDto?> GetUserProfileAsync(Guid userId, CancellationToken ct)
+    {
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId, ct);
+        return user is null ? null : MapUserProfile(user);
+    }
+
+    private static UserProfileDto MapUserProfile(AppUser user) =>
+        new(user.Id, user.Email, user.DisplayName, user.Role, MeetingProfileValidation.IsComplete(user));
 
     private AppRole ResolveBootstrapRole(string email)
     {

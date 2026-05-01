@@ -1,5 +1,7 @@
+using InterviewScheduling.Api.Auth;
 using InterviewScheduling.Api.Contracts;
 using InterviewScheduling.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InterviewScheduling.Api.Controllers;
@@ -26,5 +28,17 @@ public sealed class AuthController(AuthService authService) : ControllerBase
         {
             return Unauthorized(new { message = ex.Message });
         }
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserProfileDto>> Me(CancellationToken ct)
+    {
+        var dto = await authService.GetUserProfileAsync(User.GetUserId(), ct);
+        if (dto is null)
+            return NotFound();
+        return Ok(dto);
     }
 }

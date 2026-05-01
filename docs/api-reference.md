@@ -11,7 +11,8 @@ Unless noted, requests send header `Authorization: Bearer <jwt>`.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/v1/auth/google` | No | Body: `{ "idToken": "<google credential>" }`. Returns access token + user profile (includes numeric `role`: Parent=0, Teacher=1, Director=2). |
+| POST | `/api/v1/auth/google` | No | Body: `{ "idToken": "<google credential>" }`. Returns access token + user profile (`role`: Parent=0, Teacher=1, Director=2; `meetingProfileComplete` for parents). |
+| GET | `/api/v1/auth/me` | Yes | Current user profile (same shape as login `user`, including `meetingProfileComplete`). |
 
 ## Catalog (authenticated)
 
@@ -26,7 +27,9 @@ Unless noted, requests send header `Authorization: Bearer <jwt>`.
 | Method | Path | Role | Description |
 |--------|------|------|-------------|
 | GET | `/api/v1/parent/bookings` | Parent | List caller’s bookings. |
-| POST | `/api/v1/parent/bookings` | Parent | Body: `teacherOfferingId`, `startUtc`. Creates booking. |
+| POST | `/api/v1/parent/bookings` | Parent | Body: `teacherOfferingId`, `startUtc`. Creates booking (requires completed meeting profile; **400** if not). |
+| GET | `/api/v1/parent/meeting-profile` | Parent | Returns saved student email, attendee name, relationship (may be null until saved). |
+| PUT | `/api/v1/parent/meeting-profile` | Parent | Body: `studentSchoolEmail`, `interviewAttendeeName`, `relationshipToStudent`. Validates email shape and lengths. |
 | POST | `/api/v1/teacher-access-requests` | Parent | Body: `{ "message": "optional" }`. Submits teacher access request (409 if pending duplicate). |
 
 ## Teacher
@@ -57,7 +60,7 @@ All require role **Director**.
 
 ## Booking payload shapes
 
-- **Booking** responses include `sectionLabel` on the offering, plus subject/course/grade and parent/teacher display fields (camelCase JSON).
+- **Booking** responses include `sectionLabel`, **`studentSchoolEmail`**, **`interviewAttendeeName`**, **`relationshipToStudent`** (snapshot at booking time), subject/course/grade, and parent/teacher display fields (camelCase JSON).
 
 ## Errors
 
