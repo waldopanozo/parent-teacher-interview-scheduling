@@ -19,6 +19,7 @@ builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SlotGenerator>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<WeeklyAvailabilityService>();
 
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
           ?? throw new InvalidOperationException("Jwt configuration section is missing.");

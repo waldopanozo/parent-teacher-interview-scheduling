@@ -86,8 +86,11 @@ public sealed class AuthService(
 
     private AppRole ResolveBootstrapRole(string email)
     {
-        var set = ParseEmailSet(_auth.TeacherBootstrapEmails);
-        return set.Contains(email, StringComparer.OrdinalIgnoreCase) ? AppRole.Teacher : AppRole.Parent;
+        if (ParseEmailSet(_auth.DirectorBootstrapEmails).Contains(email, StringComparer.OrdinalIgnoreCase))
+            return AppRole.Director;
+        if (ParseEmailSet(_auth.TeacherBootstrapEmails).Contains(email, StringComparer.OrdinalIgnoreCase))
+            return AppRole.Teacher;
+        return AppRole.Parent;
     }
 
     private static HashSet<string> ParseEmailSet(string raw)

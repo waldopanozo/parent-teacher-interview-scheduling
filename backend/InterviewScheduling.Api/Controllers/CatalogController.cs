@@ -27,7 +27,8 @@ public sealed class CatalogController(AppDbContext db) : ControllerBase
             o.Subject.Name,
             o.Subject.Code,
             o.CourseTitle,
-            o.GradeLevel)).ToList();
+            o.GradeLevel,
+            o.SectionLabel)).ToList();
 
         return Ok(dto);
     }

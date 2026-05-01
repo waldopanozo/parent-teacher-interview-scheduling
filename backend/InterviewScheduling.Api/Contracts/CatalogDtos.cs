@@ -8,7 +8,8 @@ public sealed class TeacherOfferingSummaryDto(
     string subjectName,
     string subjectCode,
     string courseTitle,
-    string gradeLevel)
+    string gradeLevel,
+    string sectionLabel)
 {
     public Guid Id { get; } = id;
     public string TeacherDisplayName { get; } = teacherDisplayName;
@@ -16,6 +17,7 @@ public sealed class TeacherOfferingSummaryDto(
     public string SubjectCode { get; } = subjectCode;
     public string CourseTitle { get; } = courseTitle;
     public string GradeLevel { get; } = gradeLevel;
+    public string SectionLabel { get; } = sectionLabel;
 }
 
 public sealed class SubjectSummaryDto(Guid id, string code, string name)

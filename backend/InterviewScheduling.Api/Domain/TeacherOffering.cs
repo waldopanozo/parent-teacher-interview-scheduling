@@ -12,6 +12,8 @@ public sealed class TeacherOffering
     public Subject Subject { get; set; } = null!;
     public string CourseTitle { get; set; } = "";
     public string GradeLevel { get; set; } = "";
+    /// <summary>Optional section or stream (e.g. "A", "C", "3ro-A") to distinguish parallel groups.</summary>
+    public string SectionLabel { get; set; } = "";
     public ICollection<WeeklyAvailability> WeeklyAvailabilities { get; set; } = new List<WeeklyAvailability>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

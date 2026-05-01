@@ -12,6 +12,33 @@ public sealed class CreateTeacherOfferingRequest
     public Guid SubjectId { get; set; }
     public string CourseTitle { get; set; } = "";
     public string GradeLevel { get; set; } = "";
+    public string SectionLabel { get; set; } = "";
+}
+
+public sealed class DirectorCreateTeacherOfferingRequest
+{
+    public Guid TeacherUserId { get; set; }
+    public Guid SubjectId { get; set; }
+    public string CourseTitle { get; set; } = "";
+    public string GradeLevel { get; set; } = "";
+    public string SectionLabel { get; set; } = "";
+}
+
+public sealed class SubmitTeacherAccessRequest
+{
+    public string? Message { get; set; }
+}
+
+public sealed class CreateSubjectRequest
+{
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
+}
+
+public sealed class UpdateSubjectRequest
+{
+    public string Code { get; set; } = "";
+    public string Name { get; set; } = "";
 }
 
 public sealed class ReplaceWeeklyAvailabilityRequest

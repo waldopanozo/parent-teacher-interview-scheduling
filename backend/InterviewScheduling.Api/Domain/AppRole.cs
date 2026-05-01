@@ -3,5 +3,6 @@ namespace InterviewScheduling.Api.Domain;
 public enum AppRole
 {
     Parent = 0,
-    Teacher = 1
+    Teacher = 1,
+    Director = 2
 }

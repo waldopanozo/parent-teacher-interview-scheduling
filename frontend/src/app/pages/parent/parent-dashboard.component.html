@@ -1,6 +1,10 @@
 <section class="panel">
   <h2>Parent workspace</h2>
   <p class="muted">Book a 15-minute interview with a teacher who published availability for that subject and grade.</p>
+  <p class="muted">
+    <a routerLink="/app/parent/request-teacher">Request teacher access</a>
+    — ask the director to approve your account as a teacher (you will sign in again after approval).
+  </p>
 
   <div class="grid">
     <div class="card">
@@ -11,7 +15,8 @@
         <select [(ngModel)]="selectedOfferingId" (ngModelChange)="loadSlots()">
           <option [ngValue]="null">Select…</option>
           <option *ngFor="let o of offerings" [ngValue]="o.id">
-            {{ o.teacherDisplayName }} — {{ o.subjectName }} ({{ o.courseTitle }}, grade {{ o.gradeLevel }})
+            {{ o.teacherDisplayName }} — {{ o.subjectName }} ({{ o.courseTitle }}, grade {{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', section ' + o.sectionLabel : '' }})
           </option>
         </select>
       </label>
@@ -50,7 +55,10 @@
           <tr *ngFor="let b of bookings">
             <td>{{ b.startUtc | date : 'short' }}</td>
             <td>{{ b.teacherDisplayName }}</td>
-            <td>{{ b.subjectName }} — {{ b.courseTitle }}</td>
+            <td>
+              {{ b.subjectName }} — {{ b.courseTitle
+              }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
           </tr>
         </tbody>
       </table>

@@ -19,6 +19,7 @@ export class TeacherDashboardComponent implements OnInit {
   subjectId: string | null = null;
   courseTitle = '';
   gradeLevel = '';
+  sectionLabel = '';
 
   availabilityOfferingId: string | null = null;
   dayOfWeek = 'Monday';
@@ -61,13 +62,15 @@ export class TeacherDashboardComponent implements OnInit {
       .createOffering({
         subjectId: this.subjectId,
         courseTitle: this.courseTitle.trim(),
-        gradeLevel: this.gradeLevel.trim()
+        gradeLevel: this.gradeLevel.trim(),
+        sectionLabel: this.sectionLabel.trim()
       })
       .subscribe({
         next: () => {
           this.status = 'Offering created.';
           this.courseTitle = '';
           this.gradeLevel = '';
+          this.sectionLabel = '';
           this.reload();
         },
         error: (err) => (this.status = err?.error ?? 'Create failed.')
