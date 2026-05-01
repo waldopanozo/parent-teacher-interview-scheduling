@@ -23,8 +23,15 @@ cp .env.example .env
 | Variable | Purpose |
 |----------|---------|
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth **Web** client id (used by the API to validate tokens and baked into the frontend image at build time). |
-| `ALLOWED_EMAIL_DOMAINS` | Comma-separated email domains allowed to sign in (e.g. `northview.edu`). |
-| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated institutional emails that receive the **Teacher** role on first sign-in; everyone else is a **Parent**. |
+| `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Leave empty** to allow **any** Google-verified address (common when the school has no Workspace domain and everyone uses Gmail). |
+| `ALLOW_PERSONAL_GOOGLE_EMAILS` | `true` / `false`. When domains are **non-empty**, set to `true` to also allow `@gmail.com` and `@googlemail.com` alongside those domains (mixed Workspace + consumer Gmail). Ignored when `ALLOWED_EMAIL_DOMAINS` is empty. |
+| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated addresses that receive the **Teacher** role on first sign-in (must match your domain / Gmail rules); everyone else is a **Parent**. |
+
+**Typical combinations**
+
+1. **Workspace / school domain only** — set `ALLOWED_EMAIL_DOMAINS` to your domain(s), set `ALLOW_PERSONAL_GOOGLE_EMAILS=false`, list teacher emails under `TEACHER_BOOTSTRAP_EMAILS`.
+2. **Personal Gmail only** — leave `ALLOWED_EMAIL_DOMAINS` **empty**; any verified Google account can sign in. Use full Gmail addresses in `TEACHER_BOOTSTRAP_EMAILS` for teachers.
+3. **Both** — set domains **and** `ALLOW_PERSONAL_GOOGLE_EMAILS=true` so `@school.edu` **and** `@gmail.com` / `@googlemail.com` are accepted.
 
 ### 2. Google Cloud Console
 
