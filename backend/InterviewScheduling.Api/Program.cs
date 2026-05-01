@@ -5,6 +5,7 @@ using InterviewScheduling.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,13 +64,26 @@ var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var log = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
     if (app.Environment.IsEnvironment("Testing"))
         await db.Database.EnsureCreatedAsync();
     else
         await db.Database.MigrateAsync();
 
-    var seedDemos = app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing");
-    await DbSeeder.SeedAsync(db, seedDemos);
+    var testing = app.Environment.IsEnvironment("Testing");
+    var production = app.Environment.IsProduction();
+    var seedDemoFlag = app.Configuration.GetValue("Seed:DemoUsers", false);
+    var seedDemoPasswordUsers = !testing && !production &&
+                                (app.Environment.IsDevelopment() || seedDemoFlag);
+
+    log.LogInformation(
+        "Environment={Env}, Production={Prod}, Seed:DemoUsers from config={SeedFlag} → run demo user seed={RunSeed}",
+        app.Environment.EnvironmentName,
+        production,
+        seedDemoFlag,
+        seedDemoPasswordUsers);
+
+    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log);
 }
 
 if (app.Environment.IsDevelopment())
