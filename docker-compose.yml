@@ -27,8 +27,9 @@ services:
       Jwt__SigningKey: docker-dev-only-signing-key-min-32-chars!
       Jwt__AccessTokenMinutes: "120"
       Google__WebClientId: ${GOOGLE_OAUTH_CLIENT_ID:-}
-      Auth__AllowedEmailDomains: ${ALLOWED_EMAIL_DOMAINS:-example.test}
-      Auth__TeacherBootstrapEmails: ${TEACHER_BOOTSTRAP_EMAILS:-teacher@example.test}
+      Auth__AllowedEmailDomains: ${ALLOWED_EMAIL_DOMAINS:-}
+      Auth__AllowPersonalGoogleEmails: ${ALLOW_PERSONAL_GOOGLE_EMAILS:-true}
+      Auth__TeacherBootstrapEmails: ${TEACHER_BOOTSTRAP_EMAILS:-}
       Scheduling__SchoolTimeZoneId: America/New_York
       Cors__AllowedOrigins__0: http://localhost:3456
     depends_on:

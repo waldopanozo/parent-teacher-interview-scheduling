@@ -50,8 +50,8 @@ public sealed class AuthService(
         if (email.Length == 0 || payload.EmailVerified != true)
             throw new AuthException("Google account email is missing or not verified.");
 
-        if (!IsAllowedInstitutionalEmail(email, payload.HostedDomain))
-            throw new AuthException("Email domain is not permitted for this school.");
+        if (!IsAllowedSignInEmail(email, payload.HostedDomain))
+            throw new AuthException("Email address is not permitted for this school configuration.");
 
         var sub = payload.Subject;
         var displayName = string.IsNullOrWhiteSpace(payload.Name) ? email : payload.Name.Trim();
@@ -98,8 +98,14 @@ public sealed class AuthService(
         return result;
     }
 
-    private bool IsAllowedInstitutionalEmail(string email, string? hostedDomain)
+    private bool IsAllowedSignInEmail(string email, string? hostedDomain)
     {
+        var at = email.LastIndexOf('@');
+        if (at <= 0 || at == email.Length - 1)
+            return false;
+
+        var suffix = email[(at + 1)..].ToLowerInvariant();
+
         var domains = _auth.AllowedEmailDomains
             .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Select(d => d.Trim().TrimStart('@').ToLowerInvariant())
@@ -109,11 +115,9 @@ public sealed class AuthService(
         if (domains.Count == 0)
             return true;
 
-        var at = email.LastIndexOf('@');
-        if (at <= 0 || at == email.Length - 1)
-            return false;
+        if (_auth.AllowPersonalGoogleEmails && IsConsumerGmailDomain(suffix))
+            return true;
 
-        var suffix = email[(at + 1)..].ToLowerInvariant();
         if (domains.Contains(suffix))
             return true;
 
@@ -122,6 +126,9 @@ public sealed class AuthService(
 
         return false;
     }
+
+    private static bool IsConsumerGmailDomain(string emailDomainSuffix) =>
+        emailDomainSuffix is "gmail.com" or "googlemail.com";
 }
 
 public sealed record AuthResult(string AccessToken, DateTime ExpiresAtUtc, UserProfileDto User);
