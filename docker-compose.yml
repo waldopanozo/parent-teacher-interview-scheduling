@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pta_interviews
+    ports:
+      - "5544:5432"
+    volumes:
+      - pta_interviews_pg:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./backend/InterviewScheduling.Api
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Host=db;Port=5432;Database=pta_interviews;Username=postgres;Password=postgres
+      Jwt__Issuer: pta-interview-scheduling
+      Jwt__Audience: pta-interview-scheduling-clients
+      Jwt__SigningKey: docker-dev-only-signing-key-min-32-chars!
+      Jwt__AccessTokenMinutes: "120"
+      Google__WebClientId: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      Auth__AllowedEmailDomains: ${ALLOWED_EMAIL_DOMAINS:-example.test}
+      Auth__TeacherBootstrapEmails: ${TEACHER_BOOTSTRAP_EMAILS:-teacher@example.test}
+      Scheduling__SchoolTimeZoneId: America/New_York
+      Cors__AllowedOrigins__0: http://localhost:4200
+    depends_on:
+      - db
+    ports:
+      - "5103:8080"
+
+volumes:
+  pta_interviews_pg:
