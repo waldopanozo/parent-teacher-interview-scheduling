@@ -10,6 +10,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TeacherOffering> TeacherOfferings => Set<TeacherOffering>();
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<TeacherAccessRequest> TeacherAccessRequests => Set<TeacherAccessRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -36,8 +37,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasKey(x => x.Id);
             e.Property(x => x.CourseTitle).HasMaxLength(200);
             e.Property(x => x.GradeLevel).HasMaxLength(64);
+            e.Property(x => x.SectionLabel).HasMaxLength(64);
             e.HasOne(x => x.Teacher).WithMany().HasForeignKey(x => x.TeacherUserId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Subject).WithMany().HasForeignKey(x => x.SubjectId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TeacherAccessRequest>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Message).HasMaxLength(2000);
+            e.HasOne(x => x.Applicant).WithMany().HasForeignKey(x => x.ApplicantUserId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.DecidedBy).WithMany().HasForeignKey(x => x.DecidedByUserId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<WeeklyAvailability>(e =>

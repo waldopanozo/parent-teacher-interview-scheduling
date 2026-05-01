@@ -121,6 +121,7 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
             o.Subject.Name,
             o.CourseTitle,
             o.GradeLevel,
+            o.SectionLabel,
             o.Teacher.DisplayName,
             b.Parent.DisplayName,
             b.Parent.Email);
@@ -134,6 +135,7 @@ public sealed record BookingDto(
     string SubjectName,
     string CourseTitle,
     string GradeLevel,
+    string SectionLabel,
     string TeacherDisplayName,
     string ParentDisplayName,
     string ParentEmail);

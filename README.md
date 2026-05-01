@@ -1,12 +1,45 @@
 # Parent–Teacher Interview Scheduling
 
-English-only demonstration project for scheduling **15-minute** parent–teacher interviews. Teachers publish **weekly** availability windows per **subject / course / grade** offering; parents browse the catalog and reserve open slots.
+Demonstration project for scheduling **15-minute** parent–teacher interviews. Teachers publish **weekly** availability per **subject / course / grade / optional section**; parents browse the catalog and reserve open slots. A **Director** role can approve staff access, manage subjects, assign offerings to teachers, and edit any teacher’s published windows.
 
-This project is intentionally aligned with a modern **.NET + Angular** full-stack profile (REST APIs, institutional Google sign-in, PostgreSQL, Docker, CI) similar to the expectations described in external role postings such as [Senior Full Stack Developer (.NET Core & Angular)](https://talent.latinolegends.com/jobs/7030828-senior-full-stack-developer-net-core-angular).
+Documentation in this repo is **English** for portfolio consistency. UI copy in the app is English.
 
-## Run everything with Docker (recommended)
+## Table of contents
 
-All runtime pieces—**PostgreSQL**, **ASP.NET Core API**, and **Angular UI (nginx)**—are started together with Docker Compose. You do not need a local Node or .NET SDK install for day-to-day use.
+1. [What you get](#what-you-get)
+2. [Roles](#roles)
+3. [Run with Docker (recommended)](#run-with-docker-recommended)
+4. [Environment variables](#environment-variables)
+5. [Google OAuth setup](#google-oauth-setup)
+6. [Local development (optional)](#local-development-optional)
+7. [Data model highlights](#data-model-highlights)
+8. [API](#api)
+9. [Further reading](#further-reading)
+10. [Stack & CI](#stack--ci)
+11. [License](#license)
+
+## What you get
+
+- **Google Sign-In** on the API: validated `id_token` → short-lived **JWT** for subsequent REST calls.
+- **PostgreSQL** + **EF Core** migrations (applied automatically on API startup in the default Docker path).
+- **Angular** SPA (lazy routes) behind **nginx**, with `/api` reverse-proxied to the API container.
+- **Three roles**: Parent, Teacher, Director (see [docs/flows-and-roles.md](docs/flows-and-roles.md)).
+
+This project is aligned with a modern **.NET + Angular** profile (REST, institutional Google sign-in, PostgreSQL, Docker) similar to expectations in external postings such as [Senior Full Stack Developer (.NET Core & Angular)](https://talent.latinolegends.com/jobs/7030828-senior-full-stack-developer-net-core-angular).
+
+## Roles
+
+| Role | How it is assigned | In the app |
+|------|--------------------|------------|
+| **Parent** | Default on first sign-in if the email is not in bootstrap lists | Book interviews, **request teacher access** (`/app/parent/request-teacher`). |
+| **Teacher** | Email listed in `TEACHER_BOOTSTRAP_EMAILS`, **or** Parent approved by a Director via teacher access request | Create offerings, set weekly availability, view bookings. |
+| **Director** | Email listed in `DIRECTOR_BOOTSTRAP_EMAILS` on first sign-in | Approve/reject teacher requests, CRUD subjects, create offerings for any teacher, replace weekly availability for any offering. |
+
+**Important:** after a Director **approves** a teacher access request, the user must **sign out and sign in again** so the JWT includes the Teacher role.
+
+See [docs/flows-and-roles.md](docs/flows-and-roles.md) for step-by-step flows and section labels (e.g. same grade, groups A and C).
+
+## Run with Docker (recommended)
 
 ### Prerequisites
 
@@ -14,34 +47,13 @@ All runtime pieces—**PostgreSQL**, **ASP.NET Core API**, and **Angular UI (ngi
 
 ### 1. Environment file
 
-Copy the example and edit values (especially the Google Web client id and school domains):
-
 ```bash
 cp .env.example .env
 ```
 
-| Variable | Purpose |
-|----------|---------|
-| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth **Web** client id (used by the API to validate tokens and baked into the frontend image at build time). |
-| `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Leave empty** to allow **any** Google-verified address (common when the school has no Workspace domain and everyone uses Gmail). |
-| `ALLOW_PERSONAL_GOOGLE_EMAILS` | `true` / `false`. When domains are **non-empty**, set to `true` to also allow `@gmail.com` and `@googlemail.com` alongside those domains (mixed Workspace + consumer Gmail). Ignored when `ALLOWED_EMAIL_DOMAINS` is empty. |
-| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated addresses that receive the **Teacher** role on first sign-in (must match your domain / Gmail rules); everyone else is a **Parent**. |
+Edit `.env` (see [Environment variables](#environment-variables)). At minimum set `GOOGLE_OAUTH_CLIENT_ID` and bootstrap emails you need for testing.
 
-**Typical combinations**
-
-1. **Workspace / school domain only** — set `ALLOWED_EMAIL_DOMAINS` to your domain(s), set `ALLOW_PERSONAL_GOOGLE_EMAILS=false`, list teacher emails under `TEACHER_BOOTSTRAP_EMAILS`.
-2. **Personal Gmail only** — leave `ALLOWED_EMAIL_DOMAINS` **empty**; any verified Google account can sign in. Use full Gmail addresses in `TEACHER_BOOTSTRAP_EMAILS` for teachers.
-3. **Both** — set domains **and** `ALLOW_PERSONAL_GOOGLE_EMAILS=true` so `@school.edu` **and** `@gmail.com` / `@googlemail.com` are accepted.
-
-### 2. Google Cloud Console
-
-Create an OAuth **Web application** client. Under **Authorized JavaScript origins**, add:
-
-- `http://localhost:3456`
-
-Under **Authorized redirect URIs**, you typically only need origins for the GIS button flow; keep defaults aligned with Google’s current guidance for Sign In With Google on the web.
-
-### 3. Start the stack
+### 2. Start the stack
 
 From the repository root:
 
@@ -49,55 +61,94 @@ From the repository root:
 docker compose --env-file .env up --build
 ```
 
-First run applies EF Core migrations and seeds subjects. Wait until all three services are up.
+The API runs EF migrations on startup and seeds baseline **subjects** if the database is empty.
 
-### 4. Open the app
+### 3. URLs
 
 | Service | URL | Notes |
 |---------|-----|--------|
-| **Web app** | [http://localhost:3456](http://localhost:3456) | Angular static files + nginx (container listens on 80 internally; host uses **3456**). Browser calls `/api/...` on the same origin, proxied to the API. |
-| **API (optional direct access)** | [http://localhost:5103](http://localhost:5103) | Useful for debugging or OpenAPI in Development. |
-| **PostgreSQL (optional host access)** | `localhost:5544` | User `postgres`, password `postgres`, database `pta_interviews`. |
+| **Web app** | [http://localhost:3456](http://localhost:3456) | nginx serves the Angular build; `/api` is proxied to the API. |
+| **API** | [http://localhost:5103](http://localhost:5103) | OpenAPI is available in Development (`/openapi/v1.json` depending on version). |
+| **PostgreSQL** | `localhost:5544` | User `postgres`, password `postgres`, database `pta_interviews`. |
 
-Stop the stack with `Ctrl+C` or:
+Stop:
 
 ```bash
 docker compose down
 ```
 
-To remove the database volume as well:
+Remove DB volume as well:
 
 ```bash
 docker compose down -v
 ```
 
-## Stack
+## Environment variables
 
-- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation (`Google.Apis.Auth`), JWT bearer authentication.
-- **Frontend**: Angular 19 (standalone, lazy routes), Google Identity Services, production build served by **nginx** with `/api` reverse proxy to the API container.
-- **Data**: PostgreSQL 16 in Docker with a named volume for persistence.
-- **CI**: GitHub Actions workflow builds backend and frontend on pushes to `dev` (see below).
+These are read by **Docker Compose** and mapped into `Auth__*`, `Google__*`, etc. Copy from [.env.example](.env.example).
 
-## Architecture (how this maps from other workspace work)
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth **Web** client id: API validates tokens; frontend image receives it at **build** time. |
+| `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Empty** = any Google-verified email allowed. |
+| `ALLOW_PERSONAL_GOOGLE_EMAILS` | When domains are **non-empty**, set `true` to also allow `@gmail.com` / `@googlemail.com`. |
+| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Teacher** on first sign-in. |
+| `DIRECTOR_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Director** on first sign-in. |
 
-- **Layering**: controllers delegate to focused services, EF Core is accessed through `AppDbContext`, and configuration lives in `Options` classes—similar to the **service + repository** style described in `resume-api`’s architecture notes.
-- **Security model**: Google ID token validation on the API issues a **stateless JWT** for later calls, in the same spirit as a **JWT gate** pattern on stateless APIs.
-- **Scheduling rules**: weekly templates expand to UTC slots using a configured **IANA time zone** (`Scheduling:SchoolTimeZoneId`).
+**Typical combinations**
 
-## CI note
+1. **School domain only** — set `ALLOWED_EMAIL_DOMAINS`, `ALLOW_PERSONAL_GOOGLE_EMAILS=false`, list teachers and at least one director in the bootstrap lists.
+2. **Gmail-only pilots** — leave `ALLOWED_EMAIL_DOMAINS` empty; use full addresses in `TEACHER_BOOTSTRAP_EMAILS` / `DIRECTOR_BOOTSTRAP_EMAILS`.
+3. **Mixed** — non-empty domains **and** `ALLOW_PERSONAL_GOOGLE_EMAILS=true`.
 
-The workflow in `/.github/workflows/build.yml` assumes this folder is the **git repository root** and runs on **pushes to `dev`**. If this project lives inside a larger monorepo, adjust paths or relocate the workflow.
+JWT signing in Docker uses `Jwt__SigningKey` from Compose (dev-only default). For production, supply a strong secret and manage secrets outside this sample.
 
-## API surface (v1)
+## Google OAuth setup
 
-- `POST /api/v1/auth/google` — exchange Google `id_token` for API JWT.
-- `GET /api/v1/subjects` — list catalog subjects (seeded).
-- `GET /api/v1/catalog/teacher-offerings` — list bookable offerings.
-- `GET /api/v1/catalog/teacher-offerings/{id}/slots?date=YYYY-MM-DD` — list available slots.
-- `POST /api/v1/teacher/offerings` — create an offering (Teacher).
-- `PUT /api/v1/teacher/offerings/{id}/weekly-availability` — replace weekly windows for an offering (Teacher).
-- `POST /api/v1/parent/bookings` — reserve a slot (Parent).
-- `GET /api/v1/parent/bookings` / `GET /api/v1/teacher/bookings` — list bookings.
+Create an OAuth **Web application** client in Google Cloud Console.
+
+- **Authorized JavaScript origins**: `http://localhost:3456` (add production origin when you deploy).
+- Use **Sign in with Google** (GIS) for the SPA; the API validates the **ID token** server-side.
+
+## Local development (optional)
+
+If you change code frequently without rebuilding Docker images:
+
+- **Backend**: .NET SDK matching `net10.0`, PostgreSQL reachable, `ConnectionStrings:Default` and `Jwt:SigningKey` (≥32 chars) in user secrets or `appsettings.Development.json`.
+- **Frontend**: Node.js LTS, `cd frontend && npm install && npm start` — use [frontend/proxy.conf.json](frontend/proxy.conf.json) (see [frontend/README.md](frontend/README.md)) to reach a local API.
+
+## Data model highlights
+
+- **User** (`AppUser`): role enum Parent / Teacher / Director.
+- **Subject**: code + name (seeded + Director CRUD).
+- **TeacherOffering**: teacher + subject + course title + grade level + **optional `sectionLabel`** (parallel classes, e.g. `A`, `C`, `3ro-A`).
+- **WeeklyAvailability**: day + local start/end (school time zone from `Scheduling:SchoolTimeZoneId`).
+- **Booking**: parent + offering + UTC slot.
+- **TeacherAccessRequest**: Parent asks for promotion; Director approves/rejects.
+
+## API
+
+Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common paths:
+
+- `POST /api/v1/auth/google` — exchange Google `id_token` for JWT.
+- `GET /api/v1/catalog/teacher-offerings` — bookable offerings (authenticated).
+- `POST /api/v1/parent/bookings` — reserve a slot.
+- `POST /api/v1/teacher-access-requests` — Parent submits teacher access request.
+- `GET|POST /api/v1/director/...` — Director operations (requests, subjects, offerings, weekly availability).
+
+## Further reading
+
+| Document | Content |
+|----------|---------|
+| [docs/flows-and-roles.md](docs/flows-and-roles.md) | User journeys, section labels, post-approval re-login. |
+| [docs/api-reference.md](docs/api-reference.md) | REST v1 paths and short descriptions. |
+| [frontend/README.md](frontend/README.md) | Optional local `npm start` and proxy notes. |
+
+## Stack & CI
+
+- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer.
+- **Frontend**: Angular (standalone, lazy routes), Google Identity Services.
+- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) runs `dotnet build` and `npm run build` only on **push** to **`main`** (not on pull requests).
 
 ## License
 

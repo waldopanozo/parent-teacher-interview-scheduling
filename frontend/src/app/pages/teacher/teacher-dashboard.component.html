@@ -27,6 +27,11 @@
         <input [(ngModel)]="gradeLevel" placeholder="e.g. 10" />
       </label>
 
+      <label class="field">
+        <span>Section (optional)</span>
+        <input [(ngModel)]="sectionLabel" placeholder="e.g. A, C, 3ro-A" />
+      </label>
+
       <button type="button" class="btn" (click)="createOffering()">Save offering</button>
     </div>
 
@@ -41,7 +46,8 @@
         <select [(ngModel)]="availabilityOfferingId">
           <option [ngValue]="null">Select…</option>
           <option *ngFor="let o of offerings" [ngValue]="o.id">
-            {{ o.subjectName }} — {{ o.courseTitle }} (grade {{ o.gradeLevel }})
+            {{ o.subjectName }} — {{ o.courseTitle }} (grade {{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
           </option>
         </select>
       </label>
@@ -81,7 +87,10 @@
           <tr *ngFor="let b of bookings">
             <td>{{ b.startUtc | date : 'short' }}</td>
             <td>{{ b.parentDisplayName }} ({{ b.parentEmail }})</td>
-            <td>{{ b.subjectName }} — {{ b.courseTitle }}</td>
+            <td>
+              {{ b.subjectName }} — {{ b.courseTitle
+              }}{{ b.sectionLabel ? ' (' + b.sectionLabel + ')' : '' }}
+            </td>
           </tr>
         </tbody>
       </table>

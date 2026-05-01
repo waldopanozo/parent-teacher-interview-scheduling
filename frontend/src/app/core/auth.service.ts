@@ -22,7 +22,14 @@ export class AuthService {
   roleName(): AppRoleName | null {
     const p = this.profile();
     if (!p) return null;
-    return p.role === 1 ? 'Teacher' : 'Parent';
+    switch (p.role) {
+      case 1:
+        return 'Teacher';
+      case 2:
+        return 'Director';
+      default:
+        return 'Parent';
+    }
   }
 
   signInWithGoogleIdToken(idToken: string) {
@@ -54,4 +61,4 @@ export class AuthService {
   }
 }
 
-export type AppRoleName = 'Parent' | 'Teacher';
+export type AppRoleName = 'Parent' | 'Teacher' | 'Director';

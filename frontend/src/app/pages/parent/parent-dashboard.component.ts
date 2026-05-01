@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ScheduleApiService } from '../../core/schedule-api.service';
 import { Booking, Slot, TeacherOfferingSummary } from '../../core/api.types';
 
 @Component({
   selector: 'app-parent-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './parent-dashboard.component.html',
   styleUrl: './parent-dashboard.component.scss'
 })

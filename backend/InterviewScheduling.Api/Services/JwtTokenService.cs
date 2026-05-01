@@ -17,7 +17,12 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options)
         if (string.IsNullOrWhiteSpace(_opt.SigningKey) || _opt.SigningKey.Length < 32)
             throw new InvalidOperationException("Jwt:SigningKey must be configured with at least 32 characters.");
 
-        var roleName = role == AppRole.Teacher ? "Teacher" : "Parent";
+        var roleName = role switch
+        {
+            AppRole.Teacher => "Teacher",
+            AppRole.Director => "Director",
+            _ => "Parent"
+        };
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),

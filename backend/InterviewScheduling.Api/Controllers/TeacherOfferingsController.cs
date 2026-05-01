@@ -2,6 +2,7 @@ using InterviewScheduling.Api.Auth;
 using InterviewScheduling.Api.Contracts;
 using InterviewScheduling.Api.Data;
 using InterviewScheduling.Api.Domain;
+using InterviewScheduling.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace InterviewScheduling.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "Teacher")]
 [Route("api/v1/teacher/offerings")]
-public sealed class TeacherOfferingsController(AppDbContext db) : ControllerBase
+public sealed class TeacherOfferingsController(AppDbContext db, WeeklyAvailabilityService weeklyAvailability)
+    : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TeacherOfferingSummaryDto>), StatusCodes.Status200OK)]
@@ -31,7 +33,8 @@ public sealed class TeacherOfferingsController(AppDbContext db) : ControllerBase
             o.Subject.Name,
             o.Subject.Code,
             o.CourseTitle,
-            o.GradeLevel)).ToList();
+            o.GradeLevel,
+            o.SectionLabel)).ToList();
 
         return Ok(dto);
     }
@@ -57,7 +60,8 @@ public sealed class TeacherOfferingsController(AppDbContext db) : ControllerBase
             TeacherUserId = teacherId,
             SubjectId = body.SubjectId,
             CourseTitle = body.CourseTitle.Trim(),
-            GradeLevel = body.GradeLevel.Trim()
+            GradeLevel = body.GradeLevel.Trim(),
+            SectionLabel = (body.SectionLabel ?? "").Trim()
         };
         db.TeacherOfferings.Add(offering);
         await db.SaveChangesAsync(ct);
@@ -68,7 +72,8 @@ public sealed class TeacherOfferingsController(AppDbContext db) : ControllerBase
             subject.Name,
             subject.Code,
             offering.CourseTitle,
-            offering.GradeLevel);
+            offering.GradeLevel,
+            offering.SectionLabel);
 
         return Created($"/api/v1/teacher/offerings/{offering.Id}", dto);
     }
@@ -79,46 +84,14 @@ public sealed class TeacherOfferingsController(AppDbContext db) : ControllerBase
         [FromBody] ReplaceWeeklyAvailabilityRequest body, CancellationToken ct)
     {
         var teacherId = User.GetUserId();
-        var offering = await db.TeacherOfferings
-            .Include(o => o.WeeklyAvailabilities)
-            .FirstOrDefaultAsync(o => o.Id == offeringId && o.TeacherUserId == teacherId, ct);
-        if (offering is null)
-            return NotFound();
-
-        foreach (var w in offering.WeeklyAvailabilities.ToList())
-            db.WeeklyAvailabilities.Remove(w);
-
-        foreach (var w in body.Windows)
+        var result = await weeklyAvailability.ReplaceAsync(offeringId, teacherId, body, ct);
+        if (!result.Ok)
         {
-            if (string.IsNullOrWhiteSpace(w.StartLocal) || string.IsNullOrWhiteSpace(w.EndLocal))
-                return BadRequest("Each window requires startLocal and endLocal (HH:mm).");
-
-            TimeSpan start;
-            TimeSpan end;
-            try
-            {
-                start = TimeOnly.Parse(w.StartLocal).ToTimeSpan();
-                end = TimeOnly.Parse(w.EndLocal).ToTimeSpan();
-            }
-            catch
-            {
-                return BadRequest("Invalid time format. Use HH:mm.");
-            }
-
-            if (end <= start)
-                return BadRequest("endLocal must be after startLocal.");
-
-            db.WeeklyAvailabilities.Add(new WeeklyAvailability
-            {
-                Id = Guid.NewGuid(),
-                TeacherOfferingId = offering.Id,
-                DayOfWeek = w.DayOfWeek,
-                StartLocal = start,
-                EndLocal = end
-            });
+            if (result.StatusCode == 404)
+                return NotFound();
+            return BadRequest(result.Error);
         }
 
-        await db.SaveChangesAsync(ct);
         return NoContent();
     }
 }

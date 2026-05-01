@@ -1,0 +1,157 @@
+<section class="panel">
+  <h2>Director workspace</h2>
+  <p class="muted">
+    Approve teacher access requests, maintain subjects, assign teacher offerings (subject, course, grade, section), and
+    edit weekly availability for any offering.
+  </p>
+
+  <div class="grid">
+    <div class="card wide">
+      <h3>Teacher access requests</h3>
+      <p class="muted small">Parents who asked to become teachers. After approval they must sign in again to get a teacher token.</p>
+      <button type="button" class="btn secondary" (click)="reloadRequests()">Refresh list</button>
+      <table *ngIf="accessRequests.length; else noReq">
+        <thead>
+          <tr>
+            <th>Applicant</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of accessRequests">
+            <td>{{ r.applicantDisplayName }}<br /><span class="muted small">{{ r.applicantEmail }}</span></td>
+            <td>{{ r.message || '—' }}</td>
+            <td>{{ requestStatusLabel(r.status) }}</td>
+            <td>
+              <button *ngIf="r.status === 0" type="button" class="btn" (click)="approve(r.id)">Approve</button>
+              <button *ngIf="r.status === 0" type="button" class="btn danger" (click)="reject(r.id)">Reject</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noReq>
+        <p class="muted">No requests loaded. Use Refresh or widen filters in code if needed.</p>
+      </ng-template>
+    </div>
+
+    <div class="card">
+      <h3>Subjects</h3>
+      <label class="field">
+        <span>Code</span>
+        <input [(ngModel)]="newSubjectCode" placeholder="e.g. CS101" />
+      </label>
+      <label class="field">
+        <span>Name</span>
+        <input [(ngModel)]="newSubjectName" placeholder="e.g. Computing" />
+      </label>
+      <button type="button" class="btn" (click)="createSubject()">Add subject</button>
+      <table *ngIf="subjects.length">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of subjects">
+            <td>{{ s.code }}</td>
+            <td>{{ s.name }}</td>
+            <td>
+              <button type="button" class="btn secondary" (click)="startEditSubject(s)">Edit</button>
+              <button type="button" class="btn danger" (click)="deleteSubject(s)">Delete</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="editingSubject">
+        <h4 class="small">Edit subject</h4>
+        <label class="field">
+          <span>Code</span>
+          <input [(ngModel)]="editSubjectCode" />
+        </label>
+        <label class="field">
+          <span>Name</span>
+          <input [(ngModel)]="editSubjectName" />
+        </label>
+        <button type="button" class="btn" (click)="saveSubjectEdit()">Save</button>
+        <button type="button" class="btn secondary" (click)="editingSubject = null">Cancel</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Create offering for a teacher</h3>
+      <p class="muted small">Use section (e.g. A, C) to separate parallel groups in the same grade.</p>
+      <label class="field">
+        <span>Teacher</span>
+        <select [(ngModel)]="offeringTeacherId" (ngModelChange)="onOfferingTeacherChange()">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }} ({{ t.email }})</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Subject</span>
+        <select [(ngModel)]="offeringSubjectId">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let s of subjects" [ngValue]="s.id">{{ s.name }} ({{ s.code }})</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Course title</span>
+        <input [(ngModel)]="offeringCourseTitle" placeholder="e.g. Computing" />
+      </label>
+      <label class="field">
+        <span>Grade level</span>
+        <input [(ngModel)]="offeringGradeLevel" placeholder="e.g. 3ro secundaria" />
+      </label>
+      <label class="field">
+        <span>Section</span>
+        <input [(ngModel)]="offeringSectionLabel" placeholder="e.g. A, C, 3ro-A" />
+      </label>
+      <button type="button" class="btn" (click)="createOfferingForTeacher()">Create offering</button>
+    </div>
+
+    <div class="card">
+      <h3>Weekly availability (any teacher)</h3>
+      <p class="muted small">Replaces all windows for the chosen offering (same as teacher self-service).</p>
+      <label class="field">
+        <span>Teacher (filter offerings)</span>
+        <select [(ngModel)]="availabilityTeacherId" (ngModelChange)="onAvailabilityTeacherChange()">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Offering</span>
+        <select [(ngModel)]="availabilityOfferingId">
+          <option [ngValue]="null">Select…</option>
+          <option *ngFor="let o of directorOfferings" [ngValue]="o.id">
+            {{ o.subjectName }} — {{ o.courseTitle }} ({{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
+          </option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Day of week</span>
+        <select [(ngModel)]="dayOfWeek">
+          <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
+        </select>
+      </label>
+      <div class="row">
+        <label class="field">
+          <span>Start</span>
+          <input [(ngModel)]="startLocal" />
+        </label>
+        <label class="field">
+          <span>End</span>
+          <input [(ngModel)]="endLocal" />
+        </label>
+      </div>
+      <button type="button" class="btn secondary" (click)="publishDirectorAvailability()">Save weekly window</button>
+    </div>
+  </div>
+
+  <p class="status" *ngIf="status">{{ status }}</p>
+</section>

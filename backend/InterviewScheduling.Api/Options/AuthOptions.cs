@@ -20,4 +20,9 @@ public sealed class AuthOptions
     /// Comma-separated institutional emails that should receive the Teacher role on first sign-in.
     /// </summary>
     public string TeacherBootstrapEmails { get; set; } = "";
+
+    /// <summary>
+    /// Comma-separated emails that should receive the Director (school manager) role on first sign-in.
+    /// </summary>
+    public string DirectorBootstrapEmails { get; set; } = "";
 }

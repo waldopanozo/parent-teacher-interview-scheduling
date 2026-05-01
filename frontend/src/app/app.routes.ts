@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth.guard';
-import { parentRoleGuard, teacherRoleGuard } from './core/role.guard';
+import { directorRoleGuard, parentRoleGuard, teacherRoleGuard } from './core/role.guard';
 
 export const routes: Routes = [
   {
@@ -13,6 +13,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/shell/shell.component').then((m) => m.ShellComponent),
     children: [
       {
+        path: 'parent/request-teacher',
+        canActivate: [parentRoleGuard],
+        loadComponent: () =>
+          import('./pages/parent/parent-request-teacher.component').then((m) => m.ParentRequestTeacherComponent)
+      },
+      {
         path: 'parent',
         canActivate: [parentRoleGuard],
         loadComponent: () =>
@@ -23,6 +29,12 @@ export const routes: Routes = [
         canActivate: [teacherRoleGuard],
         loadComponent: () =>
           import('./pages/teacher/teacher-dashboard.component').then((m) => m.TeacherDashboardComponent)
+      },
+      {
+        path: 'director',
+        canActivate: [directorRoleGuard],
+        loadComponent: () =>
+          import('./pages/director/director-dashboard.component').then((m) => m.DirectorDashboardComponent)
       },
       {
         path: '',
