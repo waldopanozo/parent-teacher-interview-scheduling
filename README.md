@@ -1,6 +1,6 @@
 # Parent–Teacher Interview Scheduling
 
-English-only portfolio system for scheduling **15-minute** parent–teacher interviews. Teachers publish **weekly** availability windows per **subject / course / grade** offering; parents browse the catalog and reserve open slots.
+English-only demonstration project for scheduling **15-minute** parent–teacher interviews. Teachers publish **weekly** availability windows per **subject / course / grade** offering; parents browse the catalog and reserve open slots.
 
 This project is intentionally aligned with a modern **.NET + Angular** full-stack profile (REST APIs, institutional Google sign-in, PostgreSQL, Docker, CI) similar to the expectations described in external role postings such as [Senior Full Stack Developer (.NET Core & Angular)](https://talent.latinolegends.com/jobs/7030828-senior-full-stack-developer-net-core-angular).
 
@@ -74,7 +74,7 @@ docker compose down -v
 ## Architecture (how this maps from other workspace work)
 
 - **Layering**: controllers delegate to focused services, EF Core is accessed through `AppDbContext`, and configuration lives in `Options` classes—similar to the **service + repository** style described in `resume-api`’s architecture notes.
-- **Security model**: Google ID token validation on the API issues a **stateless JWT** for later calls, in the same spirit as the **JWT gate** pattern used in the Java Spring module under `portfolio/sistema-seguridad-escolar-eventos-alertas`.
+- **Security model**: Google ID token validation on the API issues a **stateless JWT** for later calls, in the same spirit as a **JWT gate** pattern on stateless APIs.
 - **Scheduling rules**: weekly templates expand to UTC slots using a configured **IANA time zone** (`Scheduling:SchoolTimeZoneId`).
 
 ## CI note
