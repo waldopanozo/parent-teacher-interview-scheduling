@@ -69,6 +69,10 @@ When `ASPNETCORE_ENVIRONMENT` is **Development**, startup seeds three users **if
 
 These accounts are **not** created in **Production** or in the **Testing** host used by integration tests. Do not deploy with `Development` if you rely on this sample in a public environment.
 
+**Catalog seed:** When demo users are enabled and `demo-teacher@example.com` has **no** offerings yet, startup also creates one **Mathematics** offering (**Algebra I**, grade **9**, section **A**) with **Monday–Friday** availability **14:00–17:00** (school time zone `Scheduling:SchoolTimeZoneId`, default `America/New_York`). Parents then see **Demo Teacher** in the catalog and **12× 15-minute slots** per weekday without using the Director UI. Logs: `Seeded demo teacher offering …` or `Demo teacher already has at least one offering`.
+
+**Troubleshooting:** On API startup, check logs for `Seeded N demo users` or `Demo users already present`. If you see `Skipping demo password users`, your host is **Production** or `Seed:DemoUsers` is off. Docker Compose sets `Seed__DemoUsers` to **true** by default (still ignored when `ASPNETCORE_ENVIRONMENT=Production`). After changing seed rules, recycle the API container; existing DB rows are not removed—clear the volume with `docker compose down -v` if you need a clean database. If the parent dashboard shows **no slots**, pick a **weekday** (Mon–Fri); weekends have no windows in the demo availability.
+
 ## Parent meeting registration
 
 Parents authenticate with **their own** Google account. Before booking any slot they must save:
@@ -131,7 +135,8 @@ These are read by **Docker Compose** and mapped into `Auth__*`, `Google__*`, etc
 
 | Variable | Purpose |
 |----------|---------|
-| `ASPNETCORE_ENVIRONMENT` | **Optional** in `.env`. Compose defaults the API container to **`Development`** (`${ASPNETCORE_ENVIRONMENT:-Development}`). You **do not** need to set this for local Docker unless you want **Production** (no demo seed, no OpenAPI). |
+| `ASPNETCORE_ENVIRONMENT` | **Optional** in `.env`. Compose defaults the API container to **`Development`**. Use **Production** only for a prod-like run (no demo seed, no OpenAPI). |
+| `SEED_DEMO_USERS` | **Optional** (Docker). Passed as `Seed__DemoUsers` (default **`true`**). Demo accounts are still **skipped** when the environment is **Production**. |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth **Web** client id: API validates tokens; frontend image receives it at **build** time. |
 | `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Empty** = any Google-verified email allowed (and email/password sign-up subject to the same rule). |
 | `ALLOW_PERSONAL_GOOGLE_EMAILS` | When domains are **non-empty**, set `true` to also allow `@gmail.com` / `@googlemail.com`. |
