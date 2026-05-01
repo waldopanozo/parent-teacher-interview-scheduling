@@ -50,7 +50,7 @@ The API listens on `http://localhost:5103` (mapped from container port `8080`). 
 
 ## CI note
 
-The workflow lives in `/.github/workflows/build.yml` and assumes this folder is the **git repository root**. If you keep the portfolio monorepo layout, move or adapt the workflow paths to match your repository root.
+The workflow lives in `/.github/workflows/build.yml`, assumes this folder is the **git repository root**, and runs on **pushes to `dev`** (including merges of pull requests into `dev`). If you keep the portfolio monorepo layout, move or adapt the workflow paths to match your repository root.
 
 ## API surface (v1)
 
