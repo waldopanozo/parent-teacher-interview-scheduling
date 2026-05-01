@@ -67,7 +67,9 @@ await using (var scope = app.Services.CreateAsyncScope())
         await db.Database.EnsureCreatedAsync();
     else
         await db.Database.MigrateAsync();
-    await DbSeeder.SeedAsync(db);
+
+    var seedDemos = app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing");
+    await DbSeeder.SeedAsync(db, seedDemos);
 }
 
 if (app.Environment.IsDevelopment())

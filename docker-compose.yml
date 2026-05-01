@@ -19,8 +19,11 @@ services:
     build:
       context: ./backend/InterviewScheduling.Api
       dockerfile: Dockerfile
+      # Linux: use host network during build so NuGet/npm TLS matches the host (avoids bridge/MTU/DNS TLS quirks).
+      network: host
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      # Default Development (demo user seed, OpenAPI). Override via .env: ASPNETCORE_ENVIRONMENT=Production
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ConnectionStrings__Default: Host=db;Port=5432;Database=pta_interviews;Username=postgres;Password=postgres
       Jwt__Issuer: pta-interview-scheduling
       Jwt__Audience: pta-interview-scheduling-clients
@@ -43,6 +46,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      network: host
       args:
         GOOGLE_WEB_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
     ports:

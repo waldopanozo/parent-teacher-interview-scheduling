@@ -43,6 +43,28 @@ export class AuthService {
     );
   }
 
+  registerWithEmailPassword(email: string, password: string, displayName: string) {
+    const url = `${environment.apiBaseUrl}/v1/auth/register`;
+    return this.http.post<AuthResponse>(url, { email, password, displayName }).pipe(
+      tap((r) => {
+        localStorage.setItem(tokenKey, r.accessToken);
+        localStorage.setItem('pta_user_profile', JSON.stringify(r.user));
+        this.profile.set(r.user);
+      })
+    );
+  }
+
+  signInWithEmailPassword(email: string, password: string) {
+    const url = `${environment.apiBaseUrl}/v1/auth/email-login`;
+    return this.http.post<AuthResponse>(url, { email, password }).pipe(
+      tap((r) => {
+        localStorage.setItem(tokenKey, r.accessToken);
+        localStorage.setItem('pta_user_profile', JSON.stringify(r.user));
+        this.profile.set(r.user);
+      })
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(tokenKey);
     localStorage.removeItem('pta_user_profile');

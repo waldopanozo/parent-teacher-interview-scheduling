@@ -8,24 +8,28 @@ Documentation in this repo is **English** for portfolio consistency. UI copy in 
 
 1. [What you get](#what-you-get)
 2. [Roles](#roles)
-3. [Parent meeting registration](#parent-meeting-registration)
-4. [Run with Docker (recommended)](#run-with-docker-recommended)
-5. [Environment variables](#environment-variables)
-6. [Google OAuth setup](#google-oauth-setup)
-7. [Local development (optional)](#local-development-optional)
-8. [Data model highlights](#data-model-highlights)
-9. [API](#api)
-10. [Further reading](#further-reading)
-11. [Testing](#testing)
-12. [Stack & CI](#stack--ci)
-13. [License](#license)
+3. [Authentication](#authentication)
+4. [Demo accounts (Development only)](#demo-accounts-development-only)
+5. [Parent meeting registration](#parent-meeting-registration)
+6. [Run with Docker (recommended)](#run-with-docker-recommended)
+7. [Environment variables](#environment-variables)
+8. [Google OAuth setup](#google-oauth-setup)
+9. [Local development (optional)](#local-development-optional)
+10. [Data model highlights](#data-model-highlights)
+11. [API](#api)
+12. [Further reading](#further-reading)
+13. [Testing](#testing)
+14. [Stack & CI](#stack--ci)
+15. [License](#license)
 
 ## What you get
 
-- **Google Sign-In** on the API: validated `id_token` → short-lived **JWT** for subsequent REST calls.
-- **PostgreSQL** + **EF Core** migrations (applied automatically on API startup in the default Docker path).
+- **Sign-in options**: **Google Sign-In** (validated `id_token`) and **email + password** (`POST /api/v1/auth/register` and `POST /api/v1/auth/email-login`), both returning the same short-lived **JWT** for REST calls.
+- **Login / registration UI**: split-panel screen (login ↔ register), **Google Fonts** (Syne + Outfit), indigo-focused palette; only **Google** is offered as an OAuth provider (no other social buttons).
+- **PostgreSQL** + **EF Core** migrations (applied automatically on API startup when using Docker or a normal host).
 - **Angular** SPA (lazy routes) behind **nginx**, with `/api` reverse-proxied to the API container.
 - **Three roles**: Parent, Teacher, Director (see [docs/flows-and-roles.md](docs/flows-and-roles.md)).
+- **Development seed**: baseline **subjects** when the catalog is empty, plus optional **demo users** (one per role) when `ASPNETCORE_ENVIRONMENT=Development` (see [Demo accounts](#demo-accounts-development-only)).
 - **Parent meeting registration**: student school email, attendee name, and relationship to the student — required before booking (see below).
 
 This project is aligned with a modern **.NET + Angular** profile (REST, institutional Google sign-in, PostgreSQL, Docker) similar to expectations in external postings such as [Senior Full Stack Developer (.NET Core & Angular)](https://talent.latinolegends.com/jobs/7030828-senior-full-stack-developer-net-core-angular).
@@ -41,6 +45,29 @@ This project is aligned with a modern **.NET + Angular** profile (REST, institut
 **Important:** after a Director **approves** a teacher access request, the user must **sign out and sign in again** so the JWT includes the Teacher role.
 
 See [docs/flows-and-roles.md](docs/flows-and-roles.md) for step-by-step flows and section labels (e.g. same grade, groups A and C).
+
+## Authentication
+
+| Method | Flow |
+|--------|------|
+| **Google** | SPA loads Google Identity Services, receives an `id_token`, API validates it with `Google:WebClientId` / `GOOGLE_OAUTH_CLIENT_ID`, issues JWT. First-time users get a role from bootstrap lists (Teacher / Director) or default **Parent**. |
+| **Email + password** | **Register**: `POST /api/v1/auth/register` with `email`, `password` (min 8 chars), `displayName`. **Login**: `POST /api/v1/auth/email-login` with `email`, `password`. Same domain rules as Google (`Auth__AllowedEmailDomains`, etc.). Passwords are stored with **BCrypt**. |
+
+**Account linking:** if an email already has an email/password account, Google sign-in with that same email is rejected (clear error message) to avoid duplicate identities.
+
+**Environments:** OpenAPI (`/openapi/v1.json`) is mapped in **Development** only. Demo user seeding runs only in **Development** (see below).
+
+## Demo accounts (Development only)
+
+When `ASPNETCORE_ENVIRONMENT` is **Development**, startup seeds three users **if their emails are not already present** (password for all: **`password`**):
+
+| Email | Role |
+|-------|------|
+| `demo-parent@example.com` | Parent |
+| `demo-teacher@example.com` | Teacher |
+| `demo-director@example.com` | Director |
+
+These accounts are **not** created in **Production** or in the **Testing** host used by integration tests. Do not deploy with `Development` if you rely on this sample in a public environment.
 
 ## Parent meeting registration
 
@@ -74,7 +101,9 @@ From the repository root:
 docker compose --env-file .env up --build
 ```
 
-The API runs EF migrations on startup and seeds baseline **subjects** if the database is empty.
+On **Linux**, the Compose file sets `network: host` for **image builds** so `dotnet restore` / `npm ci` use the host network (helps avoid TLS issues to NuGet/npm through the default Docker bridge).
+
+The API runs EF migrations on startup, seeds baseline **subjects** if the catalog is empty, and (in **Development** only) ensures [demo accounts](#demo-accounts-development-only) exist.
 
 ### 3. URLs
 
@@ -102,11 +131,12 @@ These are read by **Docker Compose** and mapped into `Auth__*`, `Google__*`, etc
 
 | Variable | Purpose |
 |----------|---------|
+| `ASPNETCORE_ENVIRONMENT` | **Optional** in `.env`. Compose defaults the API container to **`Development`** (`${ASPNETCORE_ENVIRONMENT:-Development}`). You **do not** need to set this for local Docker unless you want **Production** (no demo seed, no OpenAPI). |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth **Web** client id: API validates tokens; frontend image receives it at **build** time. |
-| `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Empty** = any Google-verified email allowed. |
+| `ALLOWED_EMAIL_DOMAINS` | Comma-separated allowed **email domains** (e.g. `northview.edu`). **Empty** = any Google-verified email allowed (and email/password sign-up subject to the same rule). |
 | `ALLOW_PERSONAL_GOOGLE_EMAILS` | When domains are **non-empty**, set `true` to also allow `@gmail.com` / `@googlemail.com`. |
-| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Teacher** on first sign-in. |
-| `DIRECTOR_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Director** on first sign-in. |
+| `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Teacher** on first Google sign-in or on email/password **register**. |
+| `DIRECTOR_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Director** on first Google sign-in or on email/password **register**. |
 
 **Typical combinations**
 
@@ -144,6 +174,9 @@ If you change code frequently without rebuilding Docker images:
 Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common paths:
 
 - `POST /api/v1/auth/google` — exchange Google `id_token` for JWT.
+- `POST /api/v1/auth/register` — create account with email + password + display name; returns JWT.
+- `POST /api/v1/auth/email-login` — sign in with email + password; returns JWT.
+- `GET /api/v1/auth/me` — current user profile (JWT required).
 - `GET /api/v1/catalog/teacher-offerings` — bookable offerings (authenticated).
 - `POST /api/v1/parent/bookings` — reserve a slot.
 - `POST /api/v1/teacher-access-requests` — Parent submits teacher access request.
@@ -164,8 +197,8 @@ See [docs/testing.md](docs/testing.md). Summary: **`dotnet test`** on `Interview
 
 ## Stack & CI
 
-- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer.
-- **Frontend**: Angular (standalone, lazy routes), Google Identity Services.
+- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords.
+- **Frontend**: Angular (standalone, lazy routes), Google Identity Services, Syne + Outfit (Google Fonts) on the sign-in experience.
 - **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`**. Karma is not run in CI; use `npm test` locally when changing Angular services or components.
 
 ## License
