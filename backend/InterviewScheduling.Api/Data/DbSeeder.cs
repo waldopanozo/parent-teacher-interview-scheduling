@@ -12,9 +12,9 @@ public static class DbSeeder
 
     /// <param name="configDefaultTimeZoneId">Fallback IANA id from configuration when no row exists yet.</param>
     public static async Task SeedAsync(AppDbContext db, bool seedDemoPasswordUsers, ILogger logger,
-        string configDefaultTimeZoneId)
+        string configDefaultTimeZoneId, string configDefaultUiLanguage)
     {
-        await EnsureSchoolSettingsAsync(db, configDefaultTimeZoneId, logger);
+        await EnsureSchoolSettingsAsync(db, configDefaultTimeZoneId, configDefaultUiLanguage, logger);
 
         var subjectsAdded = await SeedSubjectsIfEmptyAsync(db);
         if (subjectsAdded > 0)
@@ -156,21 +156,26 @@ public static class DbSeeder
         return added;
     }
 
-    private static async Task EnsureSchoolSettingsAsync(AppDbContext db, string configDefaultTimeZoneId, ILogger logger)
+    private static async Task EnsureSchoolSettingsAsync(AppDbContext db, string configDefaultTimeZoneId,
+        string configDefaultUiLanguage, ILogger logger)
     {
         var exists = await db.SchoolSettings.AnyAsync(x => x.Id == SchoolSettingsService.SingletonId);
         if (exists)
             return;
 
         var tz = string.IsNullOrWhiteSpace(configDefaultTimeZoneId) ? "UTC" : configDefaultTimeZoneId.Trim();
+        var lang = string.IsNullOrWhiteSpace(configDefaultUiLanguage) ? "en" : configDefaultUiLanguage.Trim();
+        if (!lang.Equals("es", StringComparison.OrdinalIgnoreCase))
+            lang = "en";
         db.SchoolSettings.Add(new SchoolSettings
         {
             Id = SchoolSettingsService.SingletonId,
             SchoolTimeZoneId = tz,
+            UiLanguage = lang,
             UpdatedAt = DateTimeOffset.UtcNow,
             UpdatedByDirectorId = null
         });
         await db.SaveChangesAsync();
-        logger.LogInformation("Seeded school settings row with time zone {TimeZoneId}.", tz);
+        logger.LogInformation("Seeded school settings row with time zone {TimeZoneId}, language {Lang}.", tz, lang);
     }
 }

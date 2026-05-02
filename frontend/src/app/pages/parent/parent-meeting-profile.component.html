@@ -1,29 +1,24 @@
 <section class="panel">
-  <h2>Meeting registration</h2>
-  <p class="muted">
-    You sign in with <strong>your</strong> Google account. Enter the <strong>student’s school email</strong> (the
-    child this interview is about), the <strong>full name of the adult who will attend</strong>, and your
-    <strong>relationship</strong> to the student. This information is stored with each booking so teachers know who to
-    expect.
-  </p>
+  <h2>{{ 'meetingProfile.title' | translate }}</h2>
+  <p class="muted">{{ 'meetingProfile.intro' | translate }}</p>
 
   <label class="field">
-    <span>Student school email</span>
+    <span>{{ 'meetingProfile.studentEmail' | translate }}</span>
     <input [(ngModel)]="studentSchoolEmail" type="email" autocomplete="email" placeholder="student@school.edu" />
   </label>
 
   <label class="field">
-    <span>Name of person attending the interview</span>
+    <span>{{ 'meetingProfile.attendeeName' | translate }}</span>
     <input [(ngModel)]="interviewAttendeeName" autocomplete="name" placeholder="Full legal name" />
   </label>
 
   <label class="field">
-    <span>Relationship to student</span>
+    <span>{{ 'meetingProfile.relationship' | translate }}</span>
     <input [(ngModel)]="relationshipToStudent" placeholder="e.g. Mother, Father, Legal guardian" />
   </label>
 
-  <button type="button" class="btn" (click)="save()">Save and continue</button>
-  <a *ngIf="showSkipToApp" routerLink="/app/parent" class="muted">Back to parent workspace</a>
+  <button type="button" class="btn" (click)="save()">{{ 'meetingProfile.save' | translate }}</button>
+  <a *ngIf="showSkipToApp" routerLink="/app/parent" class="muted">{{ 'meetingProfile.back' | translate }}</a>
 
   <p class="status" *ngIf="status">{{ status }}</p>
 </section>

@@ -1,50 +1,45 @@
 <section class="panel">
-  <h2>Teacher workspace</h2>
-  <p class="muted">
-    Create one offering per subject/course/grade combination. Parents book fixed 15-minute slots inside the weekly
-    windows you publish.
-  </p>
+  <h2>{{ 'teacher.title' | translate }}</h2>
+  <p class="muted">{{ 'teacher.intro' | translate : { tz: schoolTimeZoneId } }}</p>
 
   <div class="grid">
     <div class="card">
-      <h3>Create offering</h3>
+      <h3>{{ 'teacher.createOffering' | translate }}</h3>
 
       <label class="field">
-        <span>Subject</span>
+        <span>{{ 'teacher.subject' | translate }}</span>
         <select [(ngModel)]="subjectId">
-          <option [ngValue]="null">Select…</option>
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
           <option *ngFor="let s of subjects" [ngValue]="s.id">{{ s.name }} ({{ s.code }})</option>
         </select>
       </label>
 
       <label class="field">
-        <span>Course title</span>
+        <span>{{ 'teacher.courseTitle' | translate }}</span>
         <input [(ngModel)]="courseTitle" placeholder="e.g. Algebra II" />
       </label>
 
       <label class="field">
-        <span>Grade level</span>
+        <span>{{ 'teacher.gradeLevel' | translate }}</span>
         <input [(ngModel)]="gradeLevel" placeholder="e.g. 10" />
       </label>
 
       <label class="field">
-        <span>Section (optional)</span>
+        <span>{{ 'teacher.section' | translate }}</span>
         <input [(ngModel)]="sectionLabel" placeholder="e.g. A, C, 3ro-A" />
       </label>
 
-      <button type="button" class="btn" (click)="createOffering()">Save offering</button>
+      <button type="button" class="btn" (click)="createOffering()">{{ 'teacher.saveOffering' | translate }}</button>
     </div>
 
     <div class="card">
-      <h3>Weekly availability</h3>
-      <p class="muted small">
-        This replaces all weekly windows for the selected offering. Use 24h HH:mm times in the school time zone.
-      </p>
+      <h3>{{ 'teacher.weeklyTitle' | translate }}</h3>
+      <p class="muted small">{{ 'teacher.weeklyHint' | translate : { tz: schoolTimeZoneId } }}</p>
 
       <label class="field">
-        <span>Offering</span>
+        <span>{{ 'teacher.offering' | translate }}</span>
         <select [(ngModel)]="availabilityOfferingId">
-          <option [ngValue]="null">Select…</option>
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
           <option *ngFor="let o of offerings" [ngValue]="o.id">
             {{ o.subjectName }} — {{ o.courseTitle }} (grade {{ o.gradeLevel
             }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
@@ -53,7 +48,7 @@
       </label>
 
       <label class="field">
-        <span>Day of week</span>
+        <span>{{ 'teacher.dayOfWeek' | translate }}</span>
         <select [(ngModel)]="dayOfWeek">
           <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
         </select>
@@ -61,32 +56,37 @@
 
       <div class="row">
         <label class="field">
-          <span>Start</span>
+          <span>{{ 'teacher.start' | translate }}</span>
           <input [(ngModel)]="startLocal" />
         </label>
         <label class="field">
-          <span>End</span>
+          <span>{{ 'teacher.end' | translate }}</span>
           <input [(ngModel)]="endLocal" />
         </label>
       </div>
 
-      <button type="button" class="btn secondary" (click)="publishAvailability()">Save weekly window</button>
+      <button type="button" class="btn secondary" (click)="publishAvailability()">
+        {{ 'teacher.saveWeekly' | translate }}
+      </button>
     </div>
 
     <div class="card wide">
-      <h3>Upcoming bookings</h3>
+      <h3>{{ 'teacher.bookingsTitle' | translate }}</h3>
       <table *ngIf="bookings.length; else empty">
         <thead>
           <tr>
-            <th>When (UTC)</th>
-            <th>Parent account</th>
-            <th>Subject</th>
-            <th>Attendee at interview</th>
+            <th>{{ 'teacher.when' | translate : { tz: schoolTimeZoneId } }}</th>
+            <th>{{ 'teacher.parentAccount' | translate }}</th>
+            <th>{{ 'teacher.subjectCol' | translate }}</th>
+            <th>{{ 'teacher.attendeeCol' | translate }}</th>
+            <th>{{ 'teacher.attendance' | translate }}</th>
+            <th>{{ 'teacher.visitNotes' | translate }}</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let b of bookings">
-            <td>{{ b.startUtc | date : 'short' }}</td>
+            <td>{{ b.startUtc | date : 'medium' : schoolTimeZoneId }}</td>
             <td>{{ b.parentDisplayName }} ({{ b.parentEmail }})</td>
             <td>
               {{ b.subjectName }} — {{ b.courseTitle
@@ -94,13 +94,28 @@
             </td>
             <td>
               {{ b.interviewAttendeeName }} — {{ b.relationshipToStudent }}<br />
-              <span class="muted small">Student email: {{ b.studentSchoolEmail }}</span>
+              <span class="muted small">{{ 'parent.student' | translate }}: {{ b.studentSchoolEmail }}</span>
+            </td>
+            <td>
+              <select [(ngModel)]="b.attendanceStatus">
+                <option [ngValue]="0">{{ 'teacher.attUnspecified' | translate }}</option>
+                <option [ngValue]="1">{{ 'teacher.attAttended' | translate }}</option>
+                <option [ngValue]="2">{{ 'teacher.attNoShow' | translate }}</option>
+              </select>
+            </td>
+            <td>
+              <textarea [(ngModel)]="b.visitNotes" rows="2" class="notes"></textarea>
+            </td>
+            <td>
+              <button type="button" class="btn secondary small" (click)="saveOutcome(b)">
+                {{ 'teacher.saveOutcome' | translate }}
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
       <ng-template #empty>
-        <p class="muted">No bookings yet.</p>
+        <p class="muted">{{ 'teacher.noBookings' | translate }}</p>
       </ng-template>
     </div>
   </div>

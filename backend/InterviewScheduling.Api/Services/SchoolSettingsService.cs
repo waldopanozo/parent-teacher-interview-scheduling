@@ -10,6 +10,12 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
 {
     public static readonly Guid SingletonId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
+    private static readonly HashSet<string> SupportedUiLanguages = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "en",
+        "es"
+    };
+
     public async Task<TimeZoneInfo> GetSchoolTimeZoneAsync(CancellationToken ct)
     {
         var id = await GetSchoolTimeZoneIdAsync(ct);
@@ -24,17 +30,29 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
         return fallbackOptions.Value.SchoolTimeZoneId;
     }
 
-    public async Task<(string TimeZoneId, DateTimeOffset? UpdatedAt, Guid? UpdatedByDirectorId)> GetSnapshotAsync(
-        CancellationToken ct)
+    public async Task<string> GetSchoolUiLanguageAsync(CancellationToken ct)
+    {
+        var row = await db.SchoolSettings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == SingletonId, ct);
+        if (row is not null && !string.IsNullOrWhiteSpace(row.UiLanguage))
+            return NormalizeUiLanguage(row.UiLanguage);
+        return NormalizeUiLanguage(fallbackOptions.Value.UiLanguage);
+    }
+
+    public async Task<(string TimeZoneId, string UiLanguage, DateTimeOffset? UpdatedAt, Guid? UpdatedByDirectorId)>
+        GetSnapshotAsync(CancellationToken ct)
     {
         var row = await db.SchoolSettings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == SingletonId, ct);
         var tz = row?.SchoolTimeZoneId;
         if (string.IsNullOrWhiteSpace(tz))
             tz = fallbackOptions.Value.SchoolTimeZoneId;
-        return (tz, row?.UpdatedAt, row?.UpdatedByDirectorId);
+        var lang = row?.UiLanguage;
+        if (string.IsNullOrWhiteSpace(lang))
+            lang = fallbackOptions.Value.UiLanguage;
+        return (tz, NormalizeUiLanguage(lang), row?.UpdatedAt, row?.UpdatedByDirectorId);
     }
 
-    public async Task UpdateSchoolTimeZoneAsync(Guid directorId, string timeZoneId, CancellationToken ct)
+    public async Task UpdateSchoolSettingsAsync(Guid directorId, string timeZoneId, string uiLanguage,
+        CancellationToken ct)
     {
         var tid = timeZoneId.Trim();
         if (tid.Length == 0)
@@ -49,6 +67,10 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
             throw new ArgumentException($"Unknown or invalid IANA time zone id: {tid}", ex);
         }
 
+        var lang = NormalizeUiLanguage(uiLanguage);
+        if (!SupportedUiLanguages.Contains(lang))
+            throw new ArgumentException("UiLanguage must be 'en' or 'es'.");
+
         var row = await db.SchoolSettings.FirstOrDefaultAsync(x => x.Id == SingletonId, ct);
         if (row is null)
         {
@@ -56,6 +78,7 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
             {
                 Id = SingletonId,
                 SchoolTimeZoneId = tid,
+                UiLanguage = lang,
                 UpdatedAt = DateTimeOffset.UtcNow,
                 UpdatedByDirectorId = directorId
             });
@@ -63,10 +86,19 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
         else
         {
             row.SchoolTimeZoneId = tid;
+            row.UiLanguage = lang;
             row.UpdatedAt = DateTimeOffset.UtcNow;
             row.UpdatedByDirectorId = directorId;
         }
 
         await db.SaveChangesAsync(ct);
+    }
+
+    private static string NormalizeUiLanguage(string raw)
+    {
+        var s = raw.Trim().ToLowerInvariant();
+        if (s.StartsWith("es", StringComparison.Ordinal))
+            return "es";
+        return "en";
     }
 }

@@ -20,6 +20,12 @@ public sealed class TeacherOfferingSummaryDto(
     public string SectionLabel { get; } = sectionLabel;
 }
 
+/// <summary>IANA time zone id used for slots, weekly windows, and UI date formatting.</summary>
+public sealed record SchoolTimeZonePublicDto(string SchoolTimeZoneId);
+
+/// <summary>Public school branding for locale and clocks (no auth).</summary>
+public sealed record SchoolPublicConfigDto(string SchoolTimeZoneId, string UiLanguage);
+
 public sealed class SubjectSummaryDto(Guid id, string code, string name)
 {
     public Guid Id { get; } = id;
@@ -45,32 +51,52 @@ public sealed class UserProfileDto(Guid id, string email, string displayName, Ap
     public bool MeetingProfileComplete { get; } = meetingProfileComplete;
 }
 
-public sealed class SchoolSettingsResponseDto(string schoolTimeZoneId, DateTimeOffset? updatedAt, Guid? updatedByDirectorId)
+public sealed class SchoolSettingsResponseDto(
+    string schoolTimeZoneId,
+    string uiLanguage,
+    DateTimeOffset? updatedAt,
+    Guid? updatedByDirectorId)
 {
     public string SchoolTimeZoneId { get; } = schoolTimeZoneId;
+    public string UiLanguage { get; } = uiLanguage;
     public DateTimeOffset? UpdatedAt { get; } = updatedAt;
     public Guid? UpdatedByDirectorId { get; } = updatedByDirectorId;
 }
 
-public sealed class CancelledBookingAuditDto(
+public sealed class VisitAuditSummaryDto(int totalBookings, int cancelledCount, int activeCount)
+{
+    public int TotalBookings { get; } = totalBookings;
+    public int CancelledCount { get; } = cancelledCount;
+    public int ActiveCount { get; } = activeCount;
+}
+
+public sealed class VisitAuditRowDto(
     Guid id,
+    DateTimeOffset createdAt,
+    bool isCancelled,
     DateTimeOffset? cancelledAt,
     Guid? cancelledByUserId,
     DateTime startUtc,
     DateTime endUtc,
+    string studentSchoolEmail,
     string parentEmail,
     string parentDisplayName,
     string teacherDisplayName,
     string subjectName,
     string courseTitle,
     string gradeLevel,
-    string sectionLabel)
+    string sectionLabel,
+    AttendanceStatus attendanceStatus,
+    string? visitNotes)
 {
     public Guid Id { get; } = id;
+    public DateTimeOffset CreatedAt { get; } = createdAt;
+    public bool IsCancelled { get; } = isCancelled;
     public DateTimeOffset? CancelledAt { get; } = cancelledAt;
     public Guid? CancelledByUserId { get; } = cancelledByUserId;
     public DateTime StartUtc { get; } = startUtc;
     public DateTime EndUtc { get; } = endUtc;
+    public string StudentSchoolEmail { get; } = studentSchoolEmail;
     public string ParentEmail { get; } = parentEmail;
     public string ParentDisplayName { get; } = parentDisplayName;
     public string TeacherDisplayName { get; } = teacherDisplayName;
@@ -78,4 +104,12 @@ public sealed class CancelledBookingAuditDto(
     public string CourseTitle { get; } = courseTitle;
     public string GradeLevel { get; } = gradeLevel;
     public string SectionLabel { get; } = sectionLabel;
+    public AttendanceStatus AttendanceStatus { get; } = attendanceStatus;
+    public string? VisitNotes { get; } = visitNotes;
+}
+
+public sealed class VisitAuditPageDto(IReadOnlyList<VisitAuditRowDto> items, VisitAuditSummaryDto? summary)
+{
+    public IReadOnlyList<VisitAuditRowDto> Items { get; } = items;
+    public VisitAuditSummaryDto? Summary { get; } = summary;
 }

@@ -73,12 +73,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasOne(x => x.TeacherOffering).WithMany(x => x.Bookings).HasForeignKey(x => x.TeacherOfferingId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Parent).WithMany().HasForeignKey(x => x.ParentUserId).OnDelete(DeleteBehavior.Restrict);
+            e.Property(x => x.VisitNotes).HasMaxLength(2000);
         });
 
         modelBuilder.Entity<SchoolSettings>(e =>
         {
             e.HasKey(x => x.Id);
             e.Property(x => x.SchoolTimeZoneId).HasMaxLength(128);
+            e.Property(x => x.UiLanguage).HasMaxLength(16);
         });
     }
 }

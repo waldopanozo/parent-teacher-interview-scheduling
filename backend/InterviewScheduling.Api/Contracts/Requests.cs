@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using InterviewScheduling.Api.Domain;
 
 namespace InterviewScheduling.Api.Contracts;
 
@@ -24,6 +25,17 @@ public sealed class UpdateSchoolSettingsRequest
 {
     /// <summary>IANA time zone id (e.g. America/New_York).</summary>
     public string SchoolTimeZoneId { get; set; } = "";
+
+    /// <summary>Whole-school UI language: en or es.</summary>
+    public string UiLanguage { get; set; } = "en";
+}
+
+public sealed class TeacherUpdateBookingRequest
+{
+    public AttendanceStatus AttendanceStatus { get; set; }
+
+    /// <summary>Optional notes on the visit / conversation.</summary>
+    public string? VisitNotes { get; set; }
 }
 
 public sealed class CreateTeacherOfferingRequest

@@ -1,32 +1,30 @@
 <div class="auth-page">
   <div class="auth-card" [class.auth-card--register]="isRegisterMode">
-    <!-- Promo panel (blue): left in login mode, right in register mode -->
     <aside class="auth-promo" aria-label="Switch form">
       <ng-container *ngIf="!isRegisterMode">
-        <h2 class="auth-promo__title">Hello, Welcome!</h2>
-        <p class="auth-promo__text">Don't have an account?</p>
-        <button type="button" class="btn-outline" (click)="setMode(true)">Register</button>
+        <h2 class="auth-promo__title">{{ 'login.welcomeNew' | translate }}</h2>
+        <p class="auth-promo__text">{{ 'login.noAccount' | translate }}</p>
+        <button type="button" class="btn-outline" (click)="setMode(true)">{{ 'login.register' | translate }}</button>
       </ng-container>
       <ng-container *ngIf="isRegisterMode">
-        <h2 class="auth-promo__title">Welcome Back!</h2>
-        <p class="auth-promo__text">Already have an account?</p>
-        <button type="button" class="btn-outline" (click)="setMode(false)">Login</button>
+        <h2 class="auth-promo__title">{{ 'login.welcomeBack' | translate }}</h2>
+        <p class="auth-promo__text">{{ 'login.hasAccount' | translate }}</p>
+        <button type="button" class="btn-outline" (click)="setMode(false)">{{ 'login.loginTab' | translate }}</button>
       </ng-container>
     </aside>
 
-    <!-- Form panel (white) -->
     <div class="auth-forms">
       <ng-container *ngIf="!isRegisterMode">
-        <h1 class="auth-forms__heading">Login</h1>
+        <h1 class="auth-forms__heading">{{ 'login.loginTab' | translate }}</h1>
         <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
           <label class="field">
-            <span class="field__label">Username</span>
+            <span class="field__label">{{ 'login.username' | translate }}</span>
             <span class="field__control">
               <input
                 type="email"
                 formControlName="email"
                 class="field__input"
-                placeholder="Email"
+                [placeholder]="'login.emailPlaceholder' | translate"
                 autocomplete="username"
               />
               <span class="field__icon" aria-hidden="true">
@@ -39,13 +37,13 @@
             </span>
           </label>
           <label class="field">
-            <span class="field__label">Password</span>
+            <span class="field__label">{{ 'login.password' | translate }}</span>
             <span class="field__control">
               <input
                 type="password"
                 formControlName="password"
                 class="field__input"
-                placeholder="Password"
+                [placeholder]="'login.passwordPlaceholder' | translate"
                 autocomplete="current-password"
               />
               <span class="field__icon" aria-hidden="true">
@@ -57,22 +55,22 @@
               </span>
             </span>
           </label>
-          <a href="#" class="link-forgot" (click)="forgotPasswordClick($event)">Forgot password?</a>
-          <button type="submit" class="btn-primary">Login</button>
+          <a href="#" class="link-forgot" (click)="forgotPasswordClick($event)">{{ 'login.forgotPassword' | translate }}</a>
+          <button type="submit" class="btn-primary">{{ 'login.loginSubmit' | translate }}</button>
         </form>
       </ng-container>
 
       <ng-container *ngIf="isRegisterMode">
-        <h1 class="auth-forms__heading">Registration</h1>
+        <h1 class="auth-forms__heading">{{ 'login.registration' | translate }}</h1>
         <form class="auth-form" [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
           <label class="field">
-            <span class="field__label">Username</span>
+            <span class="field__label">{{ 'login.username' | translate }}</span>
             <span class="field__control">
               <input
                 type="text"
                 formControlName="username"
                 class="field__input"
-                placeholder="Username"
+                [placeholder]="'login.usernamePlaceholder' | translate"
                 autocomplete="name"
               />
               <span class="field__icon" aria-hidden="true">
@@ -85,13 +83,13 @@
             </span>
           </label>
           <label class="field">
-            <span class="field__label">Email</span>
+            <span class="field__label">{{ 'login.email' | translate }}</span>
             <span class="field__control">
               <input
                 type="email"
                 formControlName="email"
                 class="field__input"
-                placeholder="Email"
+                [placeholder]="'login.emailPlaceholder' | translate"
                 autocomplete="email"
               />
               <span class="field__icon" aria-hidden="true">
@@ -104,13 +102,13 @@
             </span>
           </label>
           <label class="field">
-            <span class="field__label">Password</span>
+            <span class="field__label">{{ 'login.password' | translate }}</span>
             <span class="field__control">
               <input
                 type="password"
                 formControlName="password"
                 class="field__input"
-                placeholder="Password"
+                [placeholder]="'login.passwordPlaceholder' | translate"
                 autocomplete="new-password"
               />
               <span class="field__icon" aria-hidden="true">
@@ -122,11 +120,11 @@
               </span>
             </span>
           </label>
-          <button type="submit" class="btn-primary">Register</button>
+          <button type="submit" class="btn-primary">{{ 'login.registerSubmit' | translate }}</button>
         </form>
       </ng-container>
 
-      <p class="social-lead">or continue with Google</p>
+      <p class="social-lead">{{ 'login.googleLead' | translate }}</p>
       <div class="social-row">
         <div #googleButton class="google-host"></div>
       </div>

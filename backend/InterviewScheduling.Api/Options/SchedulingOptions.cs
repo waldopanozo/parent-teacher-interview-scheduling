@@ -9,5 +9,8 @@ public sealed class SchedulingOptions
     /// </summary>
     public string SchoolTimeZoneId { get; set; } = "America/New_York";
 
+    /// <summary>Default UI language when no school row exists: <c>en</c> or <c>es</c>.</summary>
+    public string UiLanguage { get; set; } = "en";
+
     public int SlotLengthMinutes { get; set; } = 15;
 }

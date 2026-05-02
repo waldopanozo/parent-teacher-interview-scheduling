@@ -1,28 +1,36 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ScheduleApiService } from '../../core/schedule-api.service';
+import { listIanaTimeZones } from '../../core/iana-timezones';
 import {
-  CancelledBookingAuditRow,
   SchoolSettingsResponse,
   SubjectSummary,
   TeacherAccessRequestListItem,
   TeacherListItem,
-  TeacherOfferingSummary
+  TeacherOfferingSummary,
+  VisitAuditPage,
+  VisitAuditRow
 } from '../../core/api.types';
 
 @Component({
   selector: 'app-director-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './director-dashboard.component.html',
   styleUrl: './director-dashboard.component.scss'
 })
 export class DirectorDashboardComponent implements OnInit {
   accessRequests: TeacherAccessRequestListItem[] = [];
-  cancelledBookings: CancelledBookingAuditRow[] = [];
+  visitAudit: VisitAuditPage | null = null;
+  studentEmailFilter = '';
   schoolSettings: SchoolSettingsResponse | null = null;
   editTimeZoneId = '';
+  editUiLanguage: 'en' | 'es' = 'en';
+  tzFilter = '';
+  readonly allTimeZoneIds = listIanaTimeZones();
+  timeZonesForDatalist: string[] = [];
   subjects: SubjectSummary[] = [];
   teachers: TeacherListItem[] = [];
   directorOfferings: TeacherOfferingSummary[] = [];
@@ -49,14 +57,26 @@ export class DirectorDashboardComponent implements OnInit {
 
   readonly days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-  constructor(private readonly api: ScheduleApiService) {}
+  constructor(
+    private readonly api: ScheduleApiService,
+    private readonly translate: TranslateService
+  ) {}
+
+  get displaySchoolTimeZoneId(): string {
+    return (
+      this.schoolSettings?.schoolTimeZoneId?.trim() ||
+      this.editTimeZoneId?.trim() ||
+      'UTC'
+    );
+  }
 
   ngOnInit(): void {
+    this.rebuildTimeZoneDatalist();
     this.reloadSchoolSettings();
     this.reloadSubjects();
     this.reloadTeachers();
     this.reloadRequests();
-    this.reloadCancelledBookings();
+    this.reloadVisitAudit();
   }
 
   reloadSchoolSettings(): void {
@@ -64,45 +84,85 @@ export class DirectorDashboardComponent implements OnInit {
       next: (s) => {
         this.schoolSettings = s;
         this.editTimeZoneId = s.schoolTimeZoneId ?? '';
+        this.editUiLanguage = s.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+        this.rebuildTimeZoneDatalist();
       },
       error: () => (this.status = 'Unable to load school settings.')
     });
   }
 
-  saveSchoolTimeZone(): void {
+  rebuildTimeZoneDatalist(): void {
+    const q = this.tzFilter.trim().toLowerCase();
+    const ids = this.allTimeZoneIds;
+    let list = q ? ids.filter((z) => z.toLowerCase().includes(q)) : ids;
+    const cap = 120;
+    const head = list.slice(0, cap);
+    const cur = this.editTimeZoneId.trim();
+    if (cur && !head.includes(cur)) {
+      this.timeZonesForDatalist = [cur, ...head.filter((z) => z !== cur)].slice(0, cap + 1);
+    } else {
+      this.timeZonesForDatalist = head;
+    }
+  }
+
+  saveSchoolSettings(): void {
     this.status = null;
     const id = this.editTimeZoneId.trim();
     if (!id) {
-      this.status = 'Time zone id is required.';
+      this.status = this.translate.instant('director.tzRequired');
       return;
     }
-    this.api.directorUpdateSchoolSettings({ schoolTimeZoneId: id }).subscribe({
-      next: (s) => {
-        this.schoolSettings = s;
-        this.editTimeZoneId = s.schoolTimeZoneId;
-        this.status = 'School time zone saved.';
-      },
-      error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Update failed.')
+    this.api
+      .directorUpdateSchoolSettings({ schoolTimeZoneId: id, uiLanguage: this.editUiLanguage })
+      .subscribe({
+        next: (s) => {
+          this.schoolSettings = s;
+          this.editTimeZoneId = s.schoolTimeZoneId;
+          this.editUiLanguage = s.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+          this.rebuildTimeZoneDatalist();
+          void this.translate.use(this.editUiLanguage);
+          this.status = null;
+        },
+        error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Update failed.')
+      });
+  }
+
+  reloadVisitAudit(): void {
+    this.api.directorVisitAudit(this.studentEmailFilter || undefined).subscribe({
+      next: (page) => (this.visitAudit = page),
+      error: () => (this.status = 'Unable to load visit audit.')
     });
   }
 
-  reloadCancelledBookings(): void {
-    this.api.directorCancelledBookings().subscribe({
-      next: (rows) => (this.cancelledBookings = rows),
-      error: () => (this.status = 'Unable to load cancelled bookings.')
-    });
+  visitRows(): VisitAuditRow[] {
+    return this.visitAudit?.items ?? [];
+  }
+
+  visitSummary() {
+    return this.visitAudit?.summary ?? null;
   }
 
   requestStatusLabel(status: number): string {
     switch (status) {
       case 0:
-        return 'Pending';
+        return this.translate.instant('director.reqPending');
       case 1:
-        return 'Approved';
+        return this.translate.instant('director.reqApproved');
       case 2:
-        return 'Rejected';
+        return this.translate.instant('director.reqRejected');
       default:
         return String(status);
+    }
+  }
+
+  attendanceLabel(s: number): string {
+    switch (s) {
+      case 1:
+        return this.translate.instant('teacher.attAttended');
+      case 2:
+        return this.translate.instant('teacher.attNoShow');
+      default:
+        return this.translate.instant('teacher.attUnspecified');
     }
   }
 
@@ -117,7 +177,6 @@ export class DirectorDashboardComponent implements OnInit {
   approve(id: string): void {
     this.api.directorApproveTeacherAccess(id).subscribe({
       next: () => {
-        this.status = 'Request approved. Applicant must sign in again to use teacher features.';
         this.reloadRequests();
         this.reloadTeachers();
       },
@@ -127,10 +186,7 @@ export class DirectorDashboardComponent implements OnInit {
 
   reject(id: string): void {
     this.api.directorRejectTeacherAccess(id).subscribe({
-      next: () => {
-        this.status = 'Request rejected.';
-        this.reloadRequests();
-      },
+      next: () => this.reloadRequests(),
       error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Reject failed.')
     });
   }
@@ -151,15 +207,11 @@ export class DirectorDashboardComponent implements OnInit {
 
   createSubject(): void {
     this.status = null;
-    if (!this.newSubjectCode.trim() || !this.newSubjectName.trim()) {
-      this.status = 'Subject code and name are required.';
-      return;
-    }
+    if (!this.newSubjectCode.trim() || !this.newSubjectName.trim()) return;
     this.api
       .directorCreateSubject({ code: this.newSubjectCode.trim(), name: this.newSubjectName.trim() })
       .subscribe({
         next: () => {
-          this.status = 'Subject created.';
           this.newSubjectCode = '';
           this.newSubjectName = '';
           this.reloadSubjects();
@@ -184,7 +236,6 @@ export class DirectorDashboardComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.status = 'Subject updated.';
           this.editingSubject = null;
           this.reloadSubjects();
         },
@@ -194,12 +245,9 @@ export class DirectorDashboardComponent implements OnInit {
 
   deleteSubject(s: SubjectSummary): void {
     this.status = null;
-    if (!confirm(`Delete subject ${s.code}?`)) return;
+    if (!confirm(this.translate.instant('director.confirmDeleteSubject', { code: s.code }))) return;
     this.api.directorDeleteSubject(s.id).subscribe({
-      next: () => {
-        this.status = 'Subject deleted.';
-        this.reloadSubjects();
-      },
+      next: () => this.reloadSubjects(),
       error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Delete failed.')
     });
   }
@@ -226,7 +274,6 @@ export class DirectorDashboardComponent implements OnInit {
       !this.offeringCourseTitle.trim() ||
       !this.offeringGradeLevel.trim()
     ) {
-      this.status = 'Teacher, subject, course title, and grade are required.';
       return;
     }
     this.api
@@ -239,7 +286,6 @@ export class DirectorDashboardComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.status = 'Offering created for teacher.';
           this.offeringCourseTitle = '';
           this.offeringGradeLevel = '';
           this.offeringSectionLabel = '';
@@ -253,17 +299,12 @@ export class DirectorDashboardComponent implements OnInit {
 
   publishDirectorAvailability(): void {
     this.status = null;
-    if (!this.availabilityOfferingId) {
-      this.status = 'Select teacher and offering first.';
-      return;
-    }
+    if (!this.availabilityOfferingId) return;
     const body = {
       windows: [{ dayOfWeek: this.dayOfWeek, startLocal: this.startLocal, endLocal: this.endLocal }]
     };
     this.api.directorReplaceWeeklyAvailability(this.availabilityOfferingId, body).subscribe({
-      next: () => {
-        this.status = 'Weekly availability saved for that offering.';
-      },
+      next: () => {},
       error: (err) => (this.status = err?.error ?? err?.error?.message ?? 'Save failed.')
     });
   }

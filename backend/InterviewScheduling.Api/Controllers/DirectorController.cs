@@ -22,8 +22,8 @@ public sealed class DirectorController(
     [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<SchoolSettingsResponseDto>> GetSchoolSettings(CancellationToken ct)
     {
-        var (tz, at, by) = await schoolSettings.GetSnapshotAsync(ct);
-        return Ok(new SchoolSettingsResponseDto(tz, at, by));
+        var (tz, lang, at, by) = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(new SchoolSettingsResponseDto(tz, lang, at, by));
     }
 
     [HttpPut("school-settings")]
@@ -34,23 +34,24 @@ public sealed class DirectorController(
     {
         try
         {
-            await schoolSettings.UpdateSchoolTimeZoneAsync(User.GetUserId(), body.SchoolTimeZoneId, ct);
+            await schoolSettings.UpdateSchoolSettingsAsync(User.GetUserId(), body.SchoolTimeZoneId, body.UiLanguage, ct);
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
 
-        var (tz, at, by) = await schoolSettings.GetSnapshotAsync(ct);
-        return Ok(new SchoolSettingsResponseDto(tz, at, by));
+        var (tz, lang, at, by) = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(new SchoolSettingsResponseDto(tz, lang, at, by));
     }
 
-    [HttpGet("cancelled-bookings")]
-    [ProducesResponseType(typeof(IReadOnlyList<CancelledBookingAuditDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<CancelledBookingAuditDto>>> ListCancelledBookings(CancellationToken ct)
+    [HttpGet("visit-audit")]
+    [ProducesResponseType(typeof(VisitAuditPageDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<VisitAuditPageDto>> ListVisitAudit([FromQuery] string? studentSchoolEmail,
+        [FromQuery] int take = 200, CancellationToken ct = default)
     {
-        var rows = await bookingService.ListCancelledBookingsAuditAsync(ct);
-        return Ok(rows);
+        var page = await bookingService.ListVisitAuditAsync(studentSchoolEmail, take, ct);
+        return Ok(page);
     }
 
     [HttpGet("teachers")]

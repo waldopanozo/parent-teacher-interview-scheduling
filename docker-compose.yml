@@ -35,6 +35,7 @@ services:
       Auth__TeacherBootstrapEmails: ${TEACHER_BOOTSTRAP_EMAILS:-}
       Auth__DirectorBootstrapEmails: ${DIRECTOR_BOOTSTRAP_EMAILS:-}
       Scheduling__SchoolTimeZoneId: America/New_York
+      Scheduling__UiLanguage: en
       Cors__AllowedOrigins__0: http://localhost:3456
       # Ensures demo accounts + subjects seed even if ASPNETCORE_ENVIRONMENT is not Development (still blocked in Production).
       Seed__DemoUsers: ${SEED_DEMO_USERS:-true}

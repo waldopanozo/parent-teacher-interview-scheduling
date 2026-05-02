@@ -1,19 +1,15 @@
 <section class="panel">
-  <p class="back"><a routerLink="/app/parent">Back to parent workspace</a></p>
+  <p class="back"><a routerLink="/app/parent">{{ 'meetingProfile.back' | translate }}</a></p>
 
-  <h2>Request teacher access</h2>
-  <p class="muted">
-    Submit a request to the school director. If approved, your account will be promoted to teacher after you sign in
-    again with Google. You can then create offerings per subject, grade, and section (for example two groups of the same
-    grade).
-  </p>
+  <h2>{{ 'requestTeacher.title' | translate }}</h2>
+  <p class="muted">{{ 'requestTeacher.intro' | translate }}</p>
 
   <label class="field">
-    <span>Optional message to the director</span>
+    <span>{{ 'requestTeacher.message' | translate }}</span>
     <textarea [(ngModel)]="message" placeholder="Subjects or grades you expect to teach, etc."></textarea>
   </label>
 
-  <button type="button" class="btn" (click)="submit()">Submit request</button>
+  <button type="button" class="btn" (click)="submit()">{{ 'requestTeacher.submit' | translate }}</button>
 
   <p class="status" *ngIf="status">{{ status }}</p>
 </section>
