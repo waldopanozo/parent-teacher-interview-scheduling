@@ -86,7 +86,8 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     var schedOpts = builder.Configuration.GetSection(SchedulingOptions.SectionName).Get<SchedulingOptions>()
                     ?? new SchedulingOptions();
-    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log, schedOpts.SchoolTimeZoneId, schedOpts.UiLanguage);
+    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log, schedOpts.SchoolTimeZoneId, schedOpts.UiLanguage,
+        schedOpts.ThemePreset);
 }
 
 if (app.Environment.IsDevelopment())

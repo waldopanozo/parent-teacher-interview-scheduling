@@ -22,8 +22,8 @@ public sealed class DirectorController(
     [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<SchoolSettingsResponseDto>> GetSchoolSettings(CancellationToken ct)
     {
-        var (tz, lang, at, by) = await schoolSettings.GetSnapshotAsync(ct);
-        return Ok(new SchoolSettingsResponseDto(tz, lang, at, by));
+        var snap = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(ToDto(snap));
     }
 
     [HttpPut("school-settings")]
@@ -34,16 +34,55 @@ public sealed class DirectorController(
     {
         try
         {
-            await schoolSettings.UpdateSchoolSettingsAsync(User.GetUserId(), body.SchoolTimeZoneId, body.UiLanguage, ct);
+            await schoolSettings.UpdateSchoolSettingsAsync(User.GetUserId(), body.SchoolTimeZoneId, body.UiLanguage,
+                body.ThemePreset, ct);
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
 
-        var (tz, lang, at, by) = await schoolSettings.GetSnapshotAsync(ct);
-        return Ok(new SchoolSettingsResponseDto(tz, lang, at, by));
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
     }
+
+    [HttpPost("school-logo")]
+    [RequestSizeLimit(SchoolSettingsService.MaxLogoBytes + 65_536)]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> UploadSchoolLogo(IFormFile? file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "No file uploaded." });
+
+        await using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, ct);
+        var bytes = ms.ToArray();
+        try
+        {
+            await schoolSettings.SetSchoolLogoAsync(User.GetUserId(), bytes, file.ContentType, ct);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
+    }
+
+    [HttpDelete("school-logo")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> DeleteSchoolLogo(CancellationToken ct)
+    {
+        await schoolSettings.ClearSchoolLogoAsync(User.GetUserId(), ct);
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
+    }
+
+    private static SchoolSettingsResponseDto ToDto(
+        (string TimeZoneId, string UiLanguage, string ThemePreset, bool HasCustomLogo, long BrandingVersion,
+            DateTimeOffset? UpdatedAt, Guid? UpdatedByDirectorId) s) =>
+        new(s.TimeZoneId, s.UiLanguage, s.ThemePreset, s.HasCustomLogo, s.BrandingVersion, s.UpdatedAt,
+            s.UpdatedByDirectorId);
 
     [HttpGet("visit-audit")]
     [ProducesResponseType(typeof(VisitAuditPageDto), StatusCodes.Status200OK)]

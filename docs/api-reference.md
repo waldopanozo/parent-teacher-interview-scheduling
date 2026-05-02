@@ -11,10 +11,18 @@ Unless noted, requests send header `Authorization: Bearer <jwt>`.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/v1/auth/google` | No | Body: `{ "idToken": "<google credential>" }`. Returns access token + user profile (`role`: Parent=0, Teacher=1, Director=2; `meetingProfileComplete` for parents). |
+| POST | `/api/v1/auth/google` | No | Body: `{ "idToken": "<google credential>" }`. Returns access token + user profile (`role`: Parent=0, Teacher=1, Director=2; `meetingProfileComplete` for parents; `hasPasswordLogin` is **false** for Google-only accounts). |
 | POST | `/api/v1/auth/register` | No | Body: `{ "email", "password" (min 8), "displayName" }`. Same domain/bootstrap rules as Google. **400** with `{ "message" }` on validation/conflict. |
 | POST | `/api/v1/auth/email-login` | No | Body: `{ "email", "password" }`. **401** with `{ "message" }` if invalid. |
-| GET | `/api/v1/auth/me` | Yes | Current user profile (same shape as login `user`, including `meetingProfileComplete`). |
+| GET | `/api/v1/auth/me` | Yes | Current user profile (same shape as login `user`, including `meetingProfileComplete` and `hasPasswordLogin`). |
+| PUT | `/api/v1/auth/password` | Yes | Body: `{ "currentPassword", "newPassword" }` (new min 8 chars). **Email/password accounts only**; **400** if Google-only or wrong current password. **204** on success. |
+
+## Catalog (anonymous)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/catalog/school-config` | School time zone, UI language, `themePreset`, `hasCustomLogo`, `brandingVersion` (for SPA theming before login). |
+| GET | `/api/v1/catalog/school-logo` | School logo bytes when configured; **404** if using default branding only. |
 
 ## Catalog (authenticated)
 
@@ -60,6 +68,10 @@ All require role **Director**.
 | DELETE | `/api/v1/director/subjects/{id}` | Delete if not referenced. |
 | POST | `/api/v1/director/teacher-offerings` | Body: `teacherUserId`, `subjectId`, `courseTitle`, `gradeLevel`, optional `sectionLabel`. |
 | PUT | `/api/v1/director/teacher-offerings/{offeringId}/weekly-availability` | Same body as teacher weekly PUT; any offering. |
+| GET | `/api/v1/director/school-settings` | Time zone, UI language, `themePreset`, logo flags, audit fields. |
+| PUT | `/api/v1/director/school-settings` | Body: `schoolTimeZoneId`, `uiLanguage`, `themePreset`. |
+| POST | `/api/v1/director/school-logo` | Multipart field **`file`** (PNG/JPEG/SVG/WebP, size limit applies). |
+| DELETE | `/api/v1/director/school-logo` | Remove custom logo (SPA falls back to default). |
 
 ## Booking payload shapes
 

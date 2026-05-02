@@ -160,8 +160,30 @@ public sealed class AuthService(
         return user is null ? null : MapUserProfile(user);
     }
 
+    public async Task ChangePasswordAsync(Guid userId, string currentPassword, string newPassword,
+        CancellationToken ct)
+    {
+        if (newPassword.Length < 8)
+            throw new AuthException("New password must be at least 8 characters.");
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user is null)
+            throw new AuthException("User not found.");
+        if (user.PasswordHash is null)
+            throw new AuthException(
+                "This account uses Google sign-in only. Password change is not available.");
+
+        if (string.IsNullOrEmpty(currentPassword) ||
+            !BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+            throw new AuthException("Current password is incorrect.");
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        await db.SaveChangesAsync(ct);
+    }
+
     private static UserProfileDto MapUserProfile(AppUser user) =>
-        new(user.Id, user.Email, user.DisplayName, user.Role, MeetingProfileValidation.IsComplete(user));
+        new(user.Id, user.Email, user.DisplayName, user.Role, MeetingProfileValidation.IsComplete(user),
+            user.PasswordHash is not null);
 
     private AppRole ResolveBootstrapRole(string email)
     {

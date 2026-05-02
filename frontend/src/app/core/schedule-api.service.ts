@@ -97,8 +97,26 @@ export class ScheduleApiService {
     return this.http.get<SchoolSettingsResponse>(`${this.base}/director/school-settings`);
   }
 
-  directorUpdateSchoolSettings(body: { schoolTimeZoneId: string; uiLanguage: string }) {
+  directorUpdateSchoolSettings(body: {
+    schoolTimeZoneId: string;
+    uiLanguage: string;
+    themePreset: string;
+  }) {
     return this.http.put<SchoolSettingsResponse>(`${this.base}/director/school-settings`, body);
+  }
+
+  directorUploadSchoolLogo(file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<SchoolSettingsResponse>(`${this.base}/director/school-logo`, fd);
+  }
+
+  directorDeleteSchoolLogo() {
+    return this.http.delete<SchoolSettingsResponse>(`${this.base}/director/school-logo`);
+  }
+
+  changePassword(body: { currentPassword: string; newPassword: string }) {
+    return this.http.put<void>(`${this.base}/auth/password`, body);
   }
 
   directorVisitAudit(studentSchoolEmail?: string, take = 200) {

@@ -1,8 +1,23 @@
 {
   "shell": {
     "brand": "Entrevistas APA",
-    "nav": { "parent": "Padre/Madre", "teacher": "Profesor", "director": "Director" },
-    "signOut": "Cerrar sesión"
+    "navSectionMain": "Menú",
+    "navSectionAccount": "Cuenta",
+    "searchPlaceholder": "Buscar…",
+    "sidebarHelpTitle": "¿Necesitas ayuda?",
+    "sidebarHelpText": "Contacta al colegio por acceso o si solo usas inicio con Google.",
+    "signOut": "Cerrar sesión",
+    "nav": {
+      "parent": "Padre/Madre",
+      "teacher": "Profesor",
+      "director": "Director",
+      "parentHome": "Panel",
+      "meetingProfile": "Registro de la reunión",
+      "requestTeacher": "Solicitar rol de profesor",
+      "teacherHome": "Panel del profesor",
+      "directorHome": "Panel del director",
+      "changePassword": "Cambiar contraseña"
+    }
   },
   "login": {
     "welcomeNew": "Hola, bienvenido/a",
@@ -10,18 +25,40 @@
     "register": "Registrarse",
     "welcomeBack": "¡Bienvenido/a de nuevo!",
     "hasAccount": "¿Ya tienes cuenta?",
-    "loginTab": "Iniciar sesión",
+    "loginTab": "Entrar",
     "registration": "Registro",
-    "username": "Usuario",
+    "subtitleLogin": "Usa tu correo y contraseña del colegio, o Google.",
+    "subtitleRegister": "Crea una cuenta con tu correo del centro.",
+    "or": "o",
+    "username": "Nombre visible",
     "email": "Correo",
     "password": "Contraseña",
-    "emailPlaceholder": "Correo",
-    "passwordPlaceholder": "Contraseña",
-    "usernamePlaceholder": "Nombre visible",
+    "emailPlaceholder": "tu@colegio.edu",
+    "passwordPlaceholder": "Mínimo 8 caracteres",
+    "usernamePlaceholder": "Tu nombre",
     "forgotPassword": "¿Olvidaste la contraseña?",
     "loginSubmit": "Entrar",
-    "registerSubmit": "Registrarse",
-    "googleLead": "o continúa con Google"
+    "registerSubmit": "Crear cuenta",
+    "googleLead": "Continuar con Google"
+  },
+  "forgot": {
+    "title": "Ayuda con la contraseña",
+    "lead": "No hay recuperación automática por correo en esta demo. Sí puedes cambiarla si ya entras con correo y contraseña.",
+    "bulletSignedIn": "¿Entras con correo y contraseña? Usa «Cambiar contraseña» en el menú Cuenta.",
+    "bulletGoogle": "¿Solo Google? La contraseña la gestiona Google; usa «Continuar con Google».",
+    "bulletSchool": "¿Bloqueado? Pide ayuda al director o a informática del centro.",
+    "backLogin": "Volver al inicio de sesión",
+    "createAccount": "Crear cuenta nueva"
+  },
+  "accountPassword": {
+    "title": "Cambiar contraseña",
+    "intro": "Solo para cuentas con correo y contraseña (no solo Google).",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar nueva contraseña",
+    "save": "Actualizar contraseña",
+    "success": "Contraseña actualizada. Usa la nueva la próxima vez que entres.",
+    "mismatch": "La nueva contraseña y la confirmación no coinciden."
   },
   "parent": {
     "title": "Panel de padres/madres",
@@ -109,6 +146,12 @@
     "uiLanguage": "Idioma de la interfaz",
     "langEn": "Inglés",
     "langEs": "Español",
+    "themePreset": "Paleta de colores",
+    "themePresetHint": "Se aplica al inicio de sesión y a todas las pantallas para todos los usuarios.",
+    "logoTitle": "Logo del centro",
+    "logoHint": "PNG, JPEG, SVG o WebP hasta 512 KB. Visible en el login y en la cabecera.",
+    "uploadLogo": "Subir logo",
+    "removeLogo": "Quitar logo personalizado",
     "saveSettings": "Guardar configuración del colegio",
     "lastUpdatedLabel": "Última actualización",
     "accessTitle": "Solicitudes de acceso (profesor)",
@@ -160,6 +203,16 @@
     "reqApproved": "Aprobada",
     "reqRejected": "Rechazada",
     "confirmDeleteSubject": "¿Eliminar la materia {{code}}?"
+  },
+  "theme": {
+    "preset": {
+      "default": "Azul clásico",
+      "ocean": "Océano",
+      "forest": "Bosque",
+      "sunset": "Atardecer",
+      "violet": "Violeta",
+      "rose": "Rosa"
+    }
   },
   "common": {
     "select": "Seleccionar…"

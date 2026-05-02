@@ -1,9 +1,9 @@
-.panel h2 {
-  margin: 0 0 0.35rem;
+.dash-note {
+  margin: -0.5rem 0 1rem;
 }
 
 .muted {
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .small {
@@ -24,10 +24,11 @@
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 1rem;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 20px;
+  padding: 1.15rem;
+  box-shadow: 0 4px 22px color-mix(in srgb, var(--app-text) 5%, transparent);
 }
 
 .field {
@@ -37,14 +38,14 @@
 
   span {
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--app-label);
   }
 
   select,
   input {
     padding: 0.55rem 0.65rem;
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--app-input-border);
     font: inherit;
   }
 }
@@ -54,15 +55,15 @@
   border: none;
   border-radius: 10px;
   padding: 0.55rem 0.85rem;
-  background: #2563eb;
+  background: var(--app-primary);
   color: #fff;
   cursor: pointer;
   font-weight: 600;
 }
 
 .btn.secondary {
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--app-border);
+  color: var(--app-text);
 }
 
 .btn.small {
@@ -83,14 +84,14 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--app-slot-border);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--app-slot-muted);
 }
 
 .time {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--app-text);
 }
 
 table {
@@ -103,10 +104,10 @@ th,
 td {
   text-align: left;
   padding: 0.5rem 0.35rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--app-border);
 }
 
 .status {
   margin-top: 1rem;
-  color: #0f172a;
+  color: var(--app-text);
 }

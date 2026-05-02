@@ -11,6 +11,8 @@ export interface UserProfile {
   role: AppRoleNumber;
   /** Present for Parent after API update; must be true before booking. */
   meetingProfileComplete?: boolean;
+  /** True when account has email/password (not Google-only). */
+  hasPasswordLogin?: boolean;
 }
 
 export interface AuthResponse {
@@ -29,6 +31,9 @@ export interface SubjectSummary {
 export interface SchoolPublicConfig {
   schoolTimeZoneId: string;
   uiLanguage: string;
+  themePreset: string;
+  hasCustomLogo: boolean;
+  brandingVersion: number;
 }
 
 export interface TeacherOfferingSummary {
@@ -92,6 +97,9 @@ export interface TeacherAccessRequestListItem {
 export interface SchoolSettingsResponse {
   schoolTimeZoneId: string;
   uiLanguage: string;
+  themePreset: string;
+  hasCustomLogo: boolean;
+  brandingVersion: number;
   updatedAt: string | null;
   updatedByDirectorId: string | null;
 }

@@ -12,5 +12,8 @@ public sealed class SchedulingOptions
     /// <summary>Default UI language when no school row exists: <c>en</c> or <c>es</c>.</summary>
     public string UiLanguage { get; set; } = "en";
 
+    /// <summary>Default color palette when no school row exists.</summary>
+    public string ThemePreset { get; set; } = "default";
+
     public int SlotLengthMinutes { get; set; } = 15;
 }

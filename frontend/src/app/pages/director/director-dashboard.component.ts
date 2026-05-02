@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ScheduleApiService } from '../../core/schedule-api.service';
+import { SchoolBrandingService } from '../../core/school-branding.service';
+import { SCHOOL_THEME_IDS } from '../../core/school-theme';
 import { listIanaTimeZones } from '../../core/iana-timezones';
 import {
   SchoolSettingsResponse,
@@ -28,6 +30,8 @@ export class DirectorDashboardComponent implements OnInit {
   schoolSettings: SchoolSettingsResponse | null = null;
   editTimeZoneId = '';
   editUiLanguage: 'en' | 'es' = 'en';
+  editThemePreset = 'default';
+  readonly themePresetIds = SCHOOL_THEME_IDS;
   tzFilter = '';
   readonly allTimeZoneIds = listIanaTimeZones();
   timeZonesForDatalist: string[] = [];
@@ -59,7 +63,8 @@ export class DirectorDashboardComponent implements OnInit {
 
   constructor(
     private readonly api: ScheduleApiService,
-    private readonly translate: TranslateService
+    private readonly translate: TranslateService,
+    readonly branding: SchoolBrandingService
   ) {}
 
   get displaySchoolTimeZoneId(): string {
@@ -85,6 +90,8 @@ export class DirectorDashboardComponent implements OnInit {
         this.schoolSettings = s;
         this.editTimeZoneId = s.schoolTimeZoneId ?? '';
         this.editUiLanguage = s.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+        this.editThemePreset = s.themePreset?.trim() || 'default';
+        this.branding.applyDirectorSettings(s);
         this.rebuildTimeZoneDatalist();
       },
       error: () => (this.status = 'Unable to load school settings.')
@@ -113,18 +120,52 @@ export class DirectorDashboardComponent implements OnInit {
       return;
     }
     this.api
-      .directorUpdateSchoolSettings({ schoolTimeZoneId: id, uiLanguage: this.editUiLanguage })
+      .directorUpdateSchoolSettings({
+        schoolTimeZoneId: id,
+        uiLanguage: this.editUiLanguage,
+        themePreset: this.editThemePreset
+      })
       .subscribe({
         next: (s) => {
           this.schoolSettings = s;
           this.editTimeZoneId = s.schoolTimeZoneId;
           this.editUiLanguage = s.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+          this.editThemePreset = s.themePreset?.trim() || 'default';
+          this.branding.applyDirectorSettings(s);
           this.rebuildTimeZoneDatalist();
           void this.translate.use(this.editUiLanguage);
           this.status = null;
         },
         error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Update failed.')
       });
+  }
+
+  onSchoolLogoSelected(event: Event): void {
+    this.status = null;
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.api.directorUploadSchoolLogo(file).subscribe({
+      next: (s) => {
+        this.schoolSettings = s;
+        this.branding.applyDirectorSettings(s);
+        this.status = null;
+      },
+      error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Logo upload failed.')
+    });
+  }
+
+  clearSchoolLogo(): void {
+    this.status = null;
+    this.api.directorDeleteSchoolLogo().subscribe({
+      next: (s) => {
+        this.schoolSettings = s;
+        this.branding.applyDirectorSettings(s);
+        this.status = null;
+      },
+      error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Remove logo failed.')
+    });
   }
 
   reloadVisitAudit(): void {

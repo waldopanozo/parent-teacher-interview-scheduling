@@ -7,26 +7,36 @@ import { firstValueFrom } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
+import { SchoolPublicConfig } from './core/api.types';
+import { SchoolBrandingService } from './core/school-branding.service';
 import { environment } from '../environments/environment';
 
-export function schoolLocaleInitializer(http: HttpClient, translate: TranslateService) {
+export function schoolLocaleInitializer(
+  http: HttpClient,
+  translate: TranslateService,
+  branding: SchoolBrandingService
+) {
   return () =>
     firstValueFrom(
-      http
-        .get<{ schoolTimeZoneId: string; uiLanguage: string }>(
-          `${environment.apiBaseUrl}/v1/catalog/school-config`
-        )
-        .pipe(
-          switchMap((cfg) => {
-            const lang = cfg.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
-            translate.setFallbackLang('en');
-            return translate.use(lang);
-          }),
-          catchError(() => {
-            translate.setFallbackLang('en');
-            return translate.use('en');
-          })
-        )
+      http.get<SchoolPublicConfig>(`${environment.apiBaseUrl}/v1/catalog/school-config`).pipe(
+        switchMap((cfg) => {
+          branding.applyPublicConfig(cfg);
+          const lang = cfg.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+          translate.setFallbackLang('en');
+          return translate.use(lang);
+        }),
+        catchError(() => {
+          branding.applyPublicConfig({
+            schoolTimeZoneId: 'UTC',
+            uiLanguage: 'en',
+            themePreset: 'default',
+            hasCustomLogo: false,
+            brandingVersion: 0
+          });
+          translate.setFallbackLang('en');
+          return translate.use('en');
+        })
+      )
     );
 }
 
@@ -45,7 +55,7 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       useFactory: schoolLocaleInitializer,
-      deps: [HttpClient, TranslateService],
+      deps: [HttpClient, TranslateService, SchoolBrandingService],
       multi: true
     }
   ]

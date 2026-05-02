@@ -1,3 +1,39 @@
+/* Default theme tokens (match school-theme.ts preset "default") until APP_INITIALIZER runs. */
+:root {
+  --app-primary: #2563eb;
+  --app-primary-hover: #1d4ed8;
+  --app-secondary: #0f766e;
+  --app-secondary-hover: #115e59;
+  --app-surface: #ffffff;
+  --app-bg: #f8fafc;
+  --app-text: #0f172a;
+  --app-text-muted: #64748b;
+  --app-label: #334155;
+  --app-border: #e2e8f0;
+  --app-input-border: #cbd5e1;
+  --app-danger: #b91c1c;
+  --app-slot-muted: #f8fafc;
+  --app-slot-border: #e2e8f0;
+  --app-nav-active-bg: #e0f2fe;
+  --app-nav-active-fg: #075985;
+  --app-nav-link: #475569;
+  --app-shell-text: #334155;
+  --app-link: #2563eb;
+  --login-gradient-start: #eef2ff;
+  --login-gradient-mid: #f8fafc;
+  --login-gradient-end: #ecfdf5;
+  --login-accent: #5b4ddb;
+  --login-accent-mid: #4338ca;
+  --login-accent-deep: #3730a3;
+  --login-card: #ffffff;
+  --login-text: #0f172a;
+  --login-muted: #64748b;
+  --login-input-bg: #f1f5f9;
+  --login-icon: #94a3b8;
+  --login-forgot: #c2410c;
+  --login-google-border: #e2e8f0;
+}
+
 html,
 body {
   height: 100%;
@@ -16,6 +52,210 @@ body {
     Arial,
     "Apple Color Emoji",
     "Segoe UI Emoji";
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--app-text);
+  background: var(--app-bg);
+}
+
+/* —— Auth screens (login, forgot password): bento card —— */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: linear-gradient(
+    155deg,
+    var(--login-gradient-start) 0%,
+    var(--login-gradient-mid) 45%,
+    var(--login-gradient-end) 100%
+  );
+}
+
+.auth-bento {
+  width: min(440px, 100%);
+  display: grid;
+  grid-template-columns: 6px 1fr;
+  background: var(--login-card);
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow:
+    0 24px 56px color-mix(in srgb, var(--login-accent-deep) 14%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--app-border) 55%, transparent);
+}
+
+.auth-bento--narrow {
+  grid-template-columns: 1fr;
+}
+
+.auth-bento--narrow .auth-bento__accent {
+  display: none;
+}
+
+.auth-bento__accent {
+  background: linear-gradient(
+    180deg,
+    var(--login-accent) 0%,
+    var(--login-accent-mid) 55%,
+    var(--login-accent-deep) 100%
+  );
+}
+
+.auth-bento__body {
+  padding: 2rem 2rem 1.85rem;
+}
+
+.auth-bento__logo {
+  display: block;
+  margin: 0 auto 1.25rem;
+  border-radius: 16px;
+  object-fit: contain;
+}
+
+.auth-bento__title {
+  margin: 0 0 0.5rem;
+  font-family: "Syne", "Outfit", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--login-text);
+  text-align: center;
+}
+
+.auth-bento__lead {
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--login-muted);
+  text-align: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.35rem 0 0;
+  color: var(--login-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--login-google-border);
+}
+
+.btn-primary {
+  width: 100%;
+  margin-top: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--login-accent) 0%, var(--login-accent-mid) 100%);
+  color: #fff;
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter 0.15s,
+    transform 0.12s;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.99);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--login-google-border);
+  background: var(--login-card);
+  color: var(--login-text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  background: var(--login-input-bg);
+}
+
+/* —— In-app dashboard pages (bento-style sections) —— */
+.dashboard-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+}
+
+.page-header__titles {
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-family: "Syne", "Outfit", sans-serif;
+  font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--app-text);
+  line-height: 1.15;
+}
+
+.page-sub {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--app-text-muted);
+  max-width: 40rem;
+}
+
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-ghost-header {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 0.9rem;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.btn-ghost-header:hover {
+  background: color-mix(in srgb, var(--app-primary) 6%, var(--app-surface));
+  border-color: color-mix(in srgb, var(--app-primary) 25%, var(--app-border));
 }

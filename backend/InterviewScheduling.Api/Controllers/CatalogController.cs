@@ -17,9 +17,21 @@ public sealed class CatalogController(AppDbContext db, SchoolSettingsService sch
     [ProducesResponseType(typeof(SchoolPublicConfigDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<SchoolPublicConfigDto>> GetSchoolConfig(CancellationToken ct)
     {
-        var tz = await schoolSettings.GetSchoolTimeZoneIdAsync(ct);
-        var lang = await schoolSettings.GetSchoolUiLanguageAsync(ct);
-        return Ok(new SchoolPublicConfigDto(tz, lang));
+        var s = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(new SchoolPublicConfigDto(s.TimeZoneId, s.UiLanguage, s.ThemePreset, s.HasCustomLogo,
+            s.BrandingVersion));
+    }
+
+    [HttpGet("school-logo")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSchoolLogo(CancellationToken ct)
+    {
+        var (bytes, contentType) = await schoolSettings.GetLogoAsync(ct);
+        if (bytes is null || bytes.Length == 0)
+            return NotFound();
+        return File(bytes, contentType ?? "application/octet-stream");
     }
 
     [HttpGet("school-time-zone")]

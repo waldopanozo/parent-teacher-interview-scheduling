@@ -81,6 +81,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.HasKey(x => x.Id);
             e.Property(x => x.SchoolTimeZoneId).HasMaxLength(128);
             e.Property(x => x.UiLanguage).HasMaxLength(16);
+            e.Property(x => x.ThemePreset).HasMaxLength(32);
+            e.Property(x => x.LogoContentType).HasMaxLength(64);
         });
     }
 }

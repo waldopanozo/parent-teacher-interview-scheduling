@@ -1,8 +1,23 @@
 {
   "shell": {
     "brand": "PTA Interviews",
-    "nav": { "parent": "Parent", "teacher": "Teacher", "director": "Director" },
-    "signOut": "Sign out"
+    "navSectionMain": "Menu",
+    "navSectionAccount": "Account",
+    "searchPlaceholder": "Search…",
+    "sidebarHelpTitle": "Need help?",
+    "sidebarHelpText": "Contact your school for access issues or if you use Google-only sign-in.",
+    "signOut": "Sign out",
+    "nav": {
+      "parent": "Parent",
+      "teacher": "Teacher",
+      "director": "Director",
+      "parentHome": "Dashboard",
+      "meetingProfile": "Meeting registration",
+      "requestTeacher": "Request teacher access",
+      "teacherHome": "Teacher dashboard",
+      "directorHome": "Director dashboard",
+      "changePassword": "Change password"
+    }
   },
   "login": {
     "welcomeNew": "Hello, Welcome!",
@@ -10,18 +25,40 @@
     "register": "Register",
     "welcomeBack": "Welcome Back!",
     "hasAccount": "Already have an account?",
-    "loginTab": "Login",
+    "loginTab": "Sign in",
     "registration": "Registration",
-    "username": "Username",
+    "subtitleLogin": "Use your school email and password, or Google.",
+    "subtitleRegister": "Create an account with your school email.",
+    "or": "or",
+    "username": "Display name",
     "email": "Email",
     "password": "Password",
-    "emailPlaceholder": "Email",
-    "passwordPlaceholder": "Password",
-    "usernamePlaceholder": "Username",
+    "emailPlaceholder": "you@school.edu",
+    "passwordPlaceholder": "At least 8 characters",
+    "usernamePlaceholder": "Your name",
     "forgotPassword": "Forgot password?",
-    "loginSubmit": "Login",
-    "registerSubmit": "Register",
-    "googleLead": "or continue with Google"
+    "loginSubmit": "Sign in",
+    "registerSubmit": "Create account",
+    "googleLead": "Continue with Google"
+  },
+  "forgot": {
+    "title": "Password help",
+    "lead": "Self-service email reset is not enabled in this demo. You can still manage your password if you already use email sign-in.",
+    "bulletSignedIn": "Signed in with email and password? Use Change password in the sidebar (Account).",
+    "bulletGoogle": "Use Google only? Your password is managed by Google; use “Continue with Google” on the sign-in page.",
+    "bulletSchool": "Locked out? Ask your school director or IT to verify your account.",
+    "backLogin": "Back to sign in",
+    "createAccount": "Create an account instead"
+  },
+  "accountPassword": {
+    "title": "Change password",
+    "intro": "For accounts that sign in with email and password (not Google-only).",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "save": "Update password",
+    "success": "Password updated. Use the new password next time you sign in.",
+    "mismatch": "New password and confirmation do not match."
   },
   "parent": {
     "title": "Parent workspace",
@@ -109,6 +146,12 @@
     "uiLanguage": "Interface language",
     "langEn": "English",
     "langEs": "Spanish",
+    "themePreset": "Color palette",
+    "themePresetHint": "Applies to the login page and all areas after sign-in for every user.",
+    "logoTitle": "School logo",
+    "logoHint": "PNG, JPEG, SVG or WebP up to 512 KB. Shown on login and in the app header.",
+    "uploadLogo": "Upload logo",
+    "removeLogo": "Remove custom logo",
     "saveSettings": "Save school settings",
     "lastUpdatedLabel": "Last updated",
     "accessTitle": "Teacher access requests",
@@ -160,6 +203,16 @@
     "reqApproved": "Approved",
     "reqRejected": "Rejected",
     "confirmDeleteSubject": "Delete subject {{code}}?"
+  },
+  "theme": {
+    "preset": {
+      "default": "Classic blue",
+      "ocean": "Ocean teal",
+      "forest": "Forest green",
+      "sunset": "Sunset warm",
+      "violet": "Violet",
+      "rose": "Rose"
+    }
   },
   "common": {
     "select": "Select…"

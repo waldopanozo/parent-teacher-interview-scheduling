@@ -7,7 +7,7 @@
 }
 
 .muted {
-  color: #64748b;
+  color: var(--app-text-muted);
 }
 
 .field {
@@ -17,13 +17,13 @@
 
   span {
     font-size: 0.85rem;
-    color: #334155;
+    color: var(--app-label);
   }
 
   textarea {
     padding: 0.55rem 0.65rem;
     border-radius: 10px;
-    border: 1px solid #cbd5e1;
+    border: 1px solid var(--app-input-border);
     font: inherit;
     min-height: 6rem;
   }
@@ -34,7 +34,7 @@
   border: none;
   border-radius: 10px;
   padding: 0.55rem 0.85rem;
-  background: #2563eb;
+  background: var(--app-primary);
   color: #fff;
   cursor: pointer;
   font-weight: 600;
@@ -46,9 +46,9 @@
 
 .status {
   margin-top: 1rem;
-  color: #0f172a;
+  color: var(--app-text);
 }
 
 a {
-  color: #2563eb;
+  color: var(--app-link);
 }

@@ -1,12 +1,19 @@
-<section class="panel">
-  <h2>{{ 'parent.title' | translate }}</h2>
-  <p class="muted">{{ 'parent.intro' | translate : { tz: schoolTimeZoneId } }}</p>
-  <p class="muted">
-    <a routerLink="/app/parent/meeting-profile">{{ 'parent.meetingProfileLink' | translate }}</a>
-    ·
-    <a routerLink="/app/parent/request-teacher">{{ 'parent.requestTeacherLink' | translate }}</a>
-    — {{ 'parent.requestTeacherNote' | translate }}
-  </p>
+<div class="dashboard-page">
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1 class="page-title">{{ 'parent.title' | translate }}</h1>
+      <p class="page-sub">{{ 'parent.intro' | translate : { tz: schoolTimeZoneId } }}</p>
+    </div>
+    <nav class="page-header__actions">
+      <a routerLink="/app/parent/meeting-profile" class="btn-ghost-header">{{
+        'parent.meetingProfileLink' | translate
+      }}</a>
+      <a routerLink="/app/parent/request-teacher" class="btn-ghost-header">{{
+        'parent.requestTeacherLink' | translate
+      }}</a>
+    </nav>
+  </header>
+  <p class="muted small dash-note">{{ 'parent.requestTeacherNote' | translate }}</p>
 
   <div class="grid">
     <div class="card">
@@ -94,4 +101,4 @@
   </div>
 
   <p class="status" *ngIf="status">{{ status }}</p>
-</section>
+</div>

@@ -1,6 +1,10 @@
-<section class="panel">
-  <h2>{{ 'teacher.title' | translate }}</h2>
-  <p class="muted">{{ 'teacher.intro' | translate : { tz: schoolTimeZoneId } }}</p>
+<div class="dashboard-page">
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1 class="page-title">{{ 'teacher.title' | translate }}</h1>
+      <p class="page-sub">{{ 'teacher.intro' | translate : { tz: schoolTimeZoneId } }}</p>
+    </div>
+  </header>
 
   <div class="grid">
     <div class="card">
@@ -121,4 +125,4 @@
   </div>
 
   <p class="status" *ngIf="status">{{ status }}</p>
-</section>
+</div>

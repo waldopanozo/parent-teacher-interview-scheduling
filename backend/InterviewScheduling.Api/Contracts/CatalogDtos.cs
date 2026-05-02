@@ -23,8 +23,13 @@ public sealed class TeacherOfferingSummaryDto(
 /// <summary>IANA time zone id used for slots, weekly windows, and UI date formatting.</summary>
 public sealed record SchoolTimeZonePublicDto(string SchoolTimeZoneId);
 
-/// <summary>Public school branding for locale and clocks (no auth).</summary>
-public sealed record SchoolPublicConfigDto(string SchoolTimeZoneId, string UiLanguage);
+/// <summary>Public school branding for locale, theme, and logo (no auth).</summary>
+public sealed record SchoolPublicConfigDto(
+    string SchoolTimeZoneId,
+    string UiLanguage,
+    string ThemePreset,
+    bool HasCustomLogo,
+    long BrandingVersion);
 
 public sealed class SubjectSummaryDto(Guid id, string code, string name)
 {
@@ -40,7 +45,13 @@ public sealed class AuthResponseDto(string accessToken, DateTime expiresAtUtc, U
     public UserProfileDto User { get; } = user;
 }
 
-public sealed class UserProfileDto(Guid id, string email, string displayName, AppRole role, bool meetingProfileComplete)
+public sealed class UserProfileDto(
+    Guid id,
+    string email,
+    string displayName,
+    AppRole role,
+    bool meetingProfileComplete,
+    bool hasPasswordLogin)
 {
     public Guid Id { get; } = id;
     public string Email { get; } = email;
@@ -49,16 +60,25 @@ public sealed class UserProfileDto(Guid id, string email, string displayName, Ap
 
     /// <summary>For parents: all meeting fields saved. Always true for Teacher/Director.</summary>
     public bool MeetingProfileComplete { get; } = meetingProfileComplete;
+
+    /// <summary>True when the user can sign in with email + password (can use change-password).</summary>
+    public bool HasPasswordLogin { get; } = hasPasswordLogin;
 }
 
 public sealed class SchoolSettingsResponseDto(
     string schoolTimeZoneId,
     string uiLanguage,
+    string themePreset,
+    bool hasCustomLogo,
+    long brandingVersion,
     DateTimeOffset? updatedAt,
     Guid? updatedByDirectorId)
 {
     public string SchoolTimeZoneId { get; } = schoolTimeZoneId;
     public string UiLanguage { get; } = uiLanguage;
+    public string ThemePreset { get; } = themePreset;
+    public bool HasCustomLogo { get; } = hasCustomLogo;
+    public long BrandingVersion { get; } = brandingVersion;
     public DateTimeOffset? UpdatedAt { get; } = updatedAt;
     public Guid? UpdatedByDirectorId { get; } = updatedByDirectorId;
 }

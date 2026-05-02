@@ -1,6 +1,10 @@
-<section class="panel">
-  <h2>{{ 'director.title' | translate }}</h2>
-  <p class="muted">{{ 'director.intro' | translate }}</p>
+<div class="dashboard-page">
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1 class="page-title">{{ 'director.title' | translate }}</h1>
+      <p class="page-sub">{{ 'director.intro' | translate }}</p>
+    </div>
+  </header>
 
   <div class="grid">
     <div class="card">
@@ -34,6 +38,42 @@
           <option ngValue="es">{{ 'director.langEs' | translate }}</option>
         </select>
       </label>
+      <label class="field">
+        <span>{{ 'director.themePreset' | translate }}</span>
+        <select [(ngModel)]="editThemePreset">
+          <option *ngFor="let tid of themePresetIds" [ngValue]="tid">
+            {{ ('theme.preset.' + tid) | translate }}
+          </option>
+        </select>
+      </label>
+      <p class="muted small">{{ 'director.themePresetHint' | translate }}</p>
+      <div class="logo-row">
+        <div class="logo-preview-wrap">
+          <img
+            class="logo-preview"
+            [src]="branding.getLogoSrc()"
+            alt=""
+            width="64"
+            height="64"
+          />
+        </div>
+        <div class="logo-actions">
+          <span class="logo-heading">{{ 'director.logoTitle' | translate }}</span>
+          <p class="muted small">{{ 'director.logoHint' | translate }}</p>
+          <label class="btn secondary file-upload">
+            {{ 'director.uploadLogo' | translate }}
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" (change)="onSchoolLogoSelected($event)" />
+          </label>
+          <button
+            type="button"
+            class="btn secondary"
+            (click)="clearSchoolLogo()"
+            [disabled]="!schoolSettings?.hasCustomLogo"
+          >
+            {{ 'director.removeLogo' | translate }}
+          </button>
+        </div>
+      </div>
       <button type="button" class="btn" (click)="saveSchoolSettings()">
         {{ 'director.saveSettings' | translate }}
       </button>
@@ -266,4 +306,4 @@
   </div>
 
   <p class="status" *ngIf="status">{{ status }}</p>
-</section>
+</div>
