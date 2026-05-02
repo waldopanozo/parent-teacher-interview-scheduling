@@ -69,4 +69,20 @@ export class ParentDashboardComponent implements OnInit {
         }
       });
   }
+
+  cancelBooking(booking: Booking): void {
+    if (!booking.canCancel) return;
+    if (!confirm('Cancel this interview? You can only cancel before the day of the meeting (school calendar).')) return;
+    this.status = null;
+    this.api.cancelParentBooking(booking.id).subscribe({
+      next: () => {
+        this.status = 'Booking cancelled.';
+        this.reloadBookings();
+        this.loadSlots();
+      },
+      error: (err) => {
+        this.status = err?.error?.message ?? 'Could not cancel booking.';
+      }
+    });
+  }
 }

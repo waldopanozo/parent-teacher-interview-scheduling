@@ -5,14 +5,17 @@ using Microsoft.Extensions.Options;
 
 namespace InterviewScheduling.Api.Services;
 
-public sealed class SlotGenerator(AppDbContext db, IOptions<SchedulingOptions> schedulingOptions)
+public sealed class SlotGenerator(
+    AppDbContext db,
+    IOptions<SchedulingOptions> schedulingOptions,
+    SchoolSettingsService schoolTime)
 {
     private readonly SchedulingOptions _opt = schedulingOptions.Value;
 
     public async Task<IReadOnlyList<SlotDto>> GetAvailableSlotsAsync(Guid teacherOfferingId, DateOnly localDate,
         CancellationToken ct)
     {
-        var tz = TimeZoneInfo.FindSystemTimeZoneById(_opt.SchoolTimeZoneId);
+        var tz = await schoolTime.GetSchoolTimeZoneAsync(ct);
         var offering = await db.TeacherOfferings
             .AsNoTracking()
             .Include(o => o.WeeklyAvailabilities)
@@ -33,7 +36,11 @@ public sealed class SlotGenerator(AppDbContext db, IOptions<SchedulingOptions> s
         var dayEndUtc = TimeZoneInfo.ConvertTimeToUtc(dayEndLocal, tz);
 
         var bookings = await db.Bookings.AsNoTracking()
-            .Where(b => b.TeacherOfferingId == teacherOfferingId && b.StartUtc < dayEndUtc && b.EndUtc > dayStartUtc)
+            .Where(b =>
+                b.TeacherOfferingId == teacherOfferingId &&
+                b.CancelledAt == null &&
+                b.StartUtc < dayEndUtc &&
+                b.EndUtc > dayStartUtc)
             .ToListAsync(ct);
 
         var slotLength = TimeSpan.FromMinutes(_opt.SlotLengthMinutes);

@@ -12,8 +12,47 @@ namespace InterviewScheduling.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "Director")]
 [Route("api/v1/director")]
-public sealed class DirectorController(AppDbContext db, WeeklyAvailabilityService weeklyAvailability) : ControllerBase
+public sealed class DirectorController(
+    AppDbContext db,
+    WeeklyAvailabilityService weeklyAvailability,
+    SchoolSettingsService schoolSettings,
+    BookingService bookingService) : ControllerBase
 {
+    [HttpGet("school-settings")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> GetSchoolSettings(CancellationToken ct)
+    {
+        var (tz, at, by) = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(new SchoolSettingsResponseDto(tz, at, by));
+    }
+
+    [HttpPut("school-settings")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> PutSchoolSettings([FromBody] UpdateSchoolSettingsRequest body,
+        CancellationToken ct)
+    {
+        try
+        {
+            await schoolSettings.UpdateSchoolTimeZoneAsync(User.GetUserId(), body.SchoolTimeZoneId, ct);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        var (tz, at, by) = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(new SchoolSettingsResponseDto(tz, at, by));
+    }
+
+    [HttpGet("cancelled-bookings")]
+    [ProducesResponseType(typeof(IReadOnlyList<CancelledBookingAuditDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<CancelledBookingAuditDto>>> ListCancelledBookings(CancellationToken ct)
+    {
+        var rows = await bookingService.ListCancelledBookingsAuditAsync(ct);
+        return Ok(rows);
+    }
+
     [HttpGet("teachers")]
     [ProducesResponseType(typeof(IReadOnlyList<TeacherListItemDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TeacherListItemDto>>> ListTeachers(CancellationToken ct)

@@ -1,39 +1,24 @@
 <section class="panel">
   <h2>Director workspace</h2>
   <p class="muted">
-    Approve teacher access requests, maintain subjects, assign teacher offerings (subject, course, grade, section), and
-    edit weekly availability for any offering.
+    Set the school time zone, approve teacher access, maintain subjects, assign offerings, and edit weekly availability.
+    Cancellations are kept for audit.
   </p>
 
   <div class="grid">
-    <div class="card wide">
-      <h3>Teacher access requests</h3>
-      <p class="muted small">Parents who asked to become teachers. After approval they must sign in again to get a teacher token.</p>
-      <button type="button" class="btn secondary" (click)="reloadRequests()">Refresh list</button>
-      <table *ngIf="accessRequests.length; else noReq">
-        <thead>
-          <tr>
-            <th>Applicant</th>
-            <th>Message</th>
-            <th>Status</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of accessRequests">
-            <td>{{ r.applicantDisplayName }}<br /><span class="muted small">{{ r.applicantEmail }}</span></td>
-            <td>{{ r.message || '—' }}</td>
-            <td>{{ requestStatusLabel(r.status) }}</td>
-            <td>
-              <button *ngIf="r.status === 0" type="button" class="btn" (click)="approve(r.id)">Approve</button>
-              <button *ngIf="r.status === 0" type="button" class="btn danger" (click)="reject(r.id)">Reject</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <ng-template #noReq>
-        <p class="muted">No requests loaded. Use Refresh or widen filters in code if needed.</p>
-      </ng-template>
+    <div class="card">
+      <h3>School time zone</h3>
+      <p class="muted small">
+        IANA id (e.g. <code>America/Lima</code>, <code>Europe/Madrid</code>). Teachers enter weekly windows in this zone.
+      </p>
+      <label class="field">
+        <span>Time zone id</span>
+        <input [(ngModel)]="editTimeZoneId" placeholder="America/New_York" autocomplete="off" />
+      </label>
+      <button type="button" class="btn" (click)="saveSchoolTimeZone()">Save time zone</button>
+      <p class="muted small" *ngIf="schoolSettings?.updatedAt">
+        Last updated {{ schoolSettings!.updatedAt! | date : 'medium' }}
+      </p>
     </div>
 
     <div class="card">
@@ -115,7 +100,10 @@
 
     <div class="card">
       <h3>Weekly availability (any teacher)</h3>
-      <p class="muted small">Replaces all windows for the chosen offering (same as teacher self-service).</p>
+      <p class="muted small">
+        Replaces all windows for the chosen offering (same as teacher self-service). Use 24h HH:mm in the school time
+        zone.
+      </p>
       <label class="field">
         <span>Teacher (filter offerings)</span>
         <select [(ngModel)]="availabilityTeacherId" (ngModelChange)="onAvailabilityTeacherChange()">
@@ -150,6 +138,70 @@
         </label>
       </div>
       <button type="button" class="btn secondary" (click)="publishDirectorAvailability()">Save weekly window</button>
+    </div>
+
+    <div class="card wide">
+      <h3>Teacher access requests</h3>
+      <p class="muted small">Parents who asked to become teachers. After approval they must sign in again to get a teacher token.</p>
+      <button type="button" class="btn secondary" (click)="reloadRequests()">Refresh list</button>
+      <table *ngIf="accessRequests.length; else noReq">
+        <thead>
+          <tr>
+            <th>Applicant</th>
+            <th>Message</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of accessRequests">
+            <td>{{ r.applicantDisplayName }}<br /><span class="muted small">{{ r.applicantEmail }}</span></td>
+            <td>{{ r.message || '—' }}</td>
+            <td>{{ requestStatusLabel(r.status) }}</td>
+            <td>
+              <button *ngIf="r.status === 0" type="button" class="btn" (click)="approve(r.id)">Approve</button>
+              <button *ngIf="r.status === 0" type="button" class="btn danger" (click)="reject(r.id)">Reject</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noReq>
+        <p class="muted">No requests loaded. Use Refresh.</p>
+      </ng-template>
+    </div>
+
+    <div class="card wide">
+      <h3>Cancelled bookings (audit)</h3>
+      <p class="muted small">Soft-deleted rows; the time slot can be booked again.</p>
+      <button type="button" class="btn secondary" (click)="reloadCancelledBookings()">Refresh</button>
+      <table *ngIf="cancelledBookings.length; else noCancelled">
+        <thead>
+          <tr>
+            <th>Cancelled at (local)</th>
+            <th>Slot (UTC)</th>
+            <th>Parent</th>
+            <th>Teacher / class</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of cancelledBookings">
+            <td>
+              {{ c.cancelledAt | date : 'medium' }}<br />
+              <span class="muted small" *ngIf="c.cancelledByUserId">By user {{ c.cancelledByUserId }}</span>
+            </td>
+            <td>{{ c.startUtc | date : 'short' }} — {{ c.endUtc | date : 'short' }}</td>
+            <td>{{ c.parentDisplayName }}<br /><span class="muted small">{{ c.parentEmail }}</span></td>
+            <td>
+              {{ c.teacherDisplayName }}<br />
+              {{ c.subjectName }} — {{ c.courseTitle }} ({{ c.gradeLevel
+              }}{{ c.sectionLabel ? ', ' + c.sectionLabel : '' }})
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <ng-template #noCancelled>
+        <p class="muted">No cancelled bookings loaded.</p>
+      </ng-template>
     </div>
   </div>
 

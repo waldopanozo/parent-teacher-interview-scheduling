@@ -19,4 +19,9 @@ public sealed class Booking
 
     /// <summary>Copy of relationship at booking time.</summary>
     public string RelationshipToStudent { get; set; } = "";
+
+    /// <summary>When set, the parent cancelled online; row kept for audit.</summary>
+    public DateTimeOffset? CancelledAt { get; set; }
+
+    public Guid? CancelledByUserId { get; set; }
 }

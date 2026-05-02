@@ -28,8 +28,9 @@ Unless noted, requests send header `Authorization: Bearer <jwt>`.
 
 | Method | Path | Role | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/parent/bookings` | Parent | List caller’s bookings. |
-| POST | `/api/v1/parent/bookings` | Parent | Body: `teacherOfferingId`, `startUtc`. Creates booking (requires completed meeting profile; **400** if not). |
+| GET | `/api/v1/parent/bookings` | Parent | List caller’s bookings. Each item includes `canCancel` (true before the interview’s school-calendar day). |
+| POST | `/api/v1/parent/bookings` | Parent | Body: `teacherOfferingId`, `startUtc`. Creates booking (requires completed meeting profile; **400** if not). One booking per parent per school day. |
+| DELETE | `/api/v1/parent/bookings/{id}` | Parent | Cancel own booking. **400** on or after the interview day (school time zone). **404** if not found or not owned. |
 | GET | `/api/v1/parent/meeting-profile` | Parent | Returns saved student email, attendee name, relationship (may be null until saved). |
 | PUT | `/api/v1/parent/meeting-profile` | Parent | Body: `studentSchoolEmail`, `interviewAttendeeName`, `relationshipToStudent`. Validates email shape and lengths. |
 | POST | `/api/v1/teacher-access-requests` | Parent | Body: `{ "message": "optional" }`. Submits teacher access request (409 if pending duplicate). |

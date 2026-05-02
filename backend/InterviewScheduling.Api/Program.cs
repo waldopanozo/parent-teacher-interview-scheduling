@@ -26,6 +26,7 @@ else
 
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<SchoolSettingsService>();
 builder.Services.AddScoped<SlotGenerator>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<WeeklyAvailabilityService>();
@@ -83,7 +84,9 @@ await using (var scope = app.Services.CreateAsyncScope())
         seedDemoFlag,
         seedDemoPasswordUsers);
 
-    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log);
+    var schedOpts = builder.Configuration.GetSection(SchedulingOptions.SectionName).Get<SchedulingOptions>()
+                    ?? new SchedulingOptions();
+    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log, schedOpts.SchoolTimeZoneId);
 }
 
 if (app.Environment.IsDevelopment())

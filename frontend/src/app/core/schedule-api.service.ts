@@ -3,7 +3,9 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {
   Booking,
+  CancelledBookingAuditRow,
   ParentMeetingProfile,
+  SchoolSettingsResponse,
   Slot,
   SubjectSummary,
   TeacherAccessRequestListItem,
@@ -36,6 +38,10 @@ export class ScheduleApiService {
 
   book(body: { teacherOfferingId: string; startUtc: string }) {
     return this.http.post<Booking>(`${this.base}/parent/bookings`, body);
+  }
+
+  cancelParentBooking(bookingId: string) {
+    return this.http.delete<void>(`${this.base}/parent/bookings/${bookingId}`);
   }
 
   submitTeacherAccessRequest(body: { message?: string }) {
@@ -73,6 +79,18 @@ export class ScheduleApiService {
 
   teacherBookings() {
     return this.http.get<Booking[]>(`${this.base}/teacher/bookings`);
+  }
+
+  directorSchoolSettings() {
+    return this.http.get<SchoolSettingsResponse>(`${this.base}/director/school-settings`);
+  }
+
+  directorUpdateSchoolSettings(body: { schoolTimeZoneId: string }) {
+    return this.http.put<SchoolSettingsResponse>(`${this.base}/director/school-settings`, body);
+  }
+
+  directorCancelledBookings() {
+    return this.http.get<CancelledBookingAuditRow[]>(`${this.base}/director/cancelled-bookings`);
   }
 
   directorTeacherAccessRequests(status?: string) {

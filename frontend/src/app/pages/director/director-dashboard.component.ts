@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ScheduleApiService } from '../../core/schedule-api.service';
 import {
+  CancelledBookingAuditRow,
+  SchoolSettingsResponse,
   SubjectSummary,
   TeacherAccessRequestListItem,
   TeacherListItem,
@@ -18,6 +20,9 @@ import {
 })
 export class DirectorDashboardComponent implements OnInit {
   accessRequests: TeacherAccessRequestListItem[] = [];
+  cancelledBookings: CancelledBookingAuditRow[] = [];
+  schoolSettings: SchoolSettingsResponse | null = null;
+  editTimeZoneId = '';
   subjects: SubjectSummary[] = [];
   teachers: TeacherListItem[] = [];
   directorOfferings: TeacherOfferingSummary[] = [];
@@ -47,9 +52,45 @@ export class DirectorDashboardComponent implements OnInit {
   constructor(private readonly api: ScheduleApiService) {}
 
   ngOnInit(): void {
+    this.reloadSchoolSettings();
     this.reloadSubjects();
     this.reloadTeachers();
     this.reloadRequests();
+    this.reloadCancelledBookings();
+  }
+
+  reloadSchoolSettings(): void {
+    this.api.directorSchoolSettings().subscribe({
+      next: (s) => {
+        this.schoolSettings = s;
+        this.editTimeZoneId = s.schoolTimeZoneId ?? '';
+      },
+      error: () => (this.status = 'Unable to load school settings.')
+    });
+  }
+
+  saveSchoolTimeZone(): void {
+    this.status = null;
+    const id = this.editTimeZoneId.trim();
+    if (!id) {
+      this.status = 'Time zone id is required.';
+      return;
+    }
+    this.api.directorUpdateSchoolSettings({ schoolTimeZoneId: id }).subscribe({
+      next: (s) => {
+        this.schoolSettings = s;
+        this.editTimeZoneId = s.schoolTimeZoneId;
+        this.status = 'School time zone saved.';
+      },
+      error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Update failed.')
+    });
+  }
+
+  reloadCancelledBookings(): void {
+    this.api.directorCancelledBookings().subscribe({
+      next: (rows) => (this.cancelledBookings = rows),
+      error: () => (this.status = 'Unable to load cancelled bookings.')
+    });
   }
 
   requestStatusLabel(status: number): string {

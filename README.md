@@ -183,7 +183,8 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 - `POST /api/v1/auth/email-login` — sign in with email + password; returns JWT.
 - `GET /api/v1/auth/me` — current user profile (JWT required).
 - `GET /api/v1/catalog/teacher-offerings` — bookable offerings (authenticated).
-- `POST /api/v1/parent/bookings` — reserve a slot.
+- `POST /api/v1/parent/bookings` — reserve a slot (one per parent per school day).
+- `DELETE /api/v1/parent/bookings/{id}` — parent cancels own booking **before** the interview day (school calendar); not allowed on the day of the interview.
 - `POST /api/v1/teacher-access-requests` — Parent submits teacher access request.
 - `GET|POST /api/v1/director/...` — Director operations (requests, subjects, offerings, weekly availability).
 

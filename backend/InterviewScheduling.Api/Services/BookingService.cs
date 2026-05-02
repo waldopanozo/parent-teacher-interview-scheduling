@@ -1,3 +1,4 @@
+using InterviewScheduling.Api.Contracts;
 using InterviewScheduling.Api.Data;
 using InterviewScheduling.Api.Domain;
 using InterviewScheduling.Api.Options;
@@ -6,7 +7,10 @@ using Microsoft.Extensions.Options;
 
 namespace InterviewScheduling.Api.Services;
 
-public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> schedulingOptions)
+public sealed class BookingService(
+    AppDbContext db,
+    IOptions<SchedulingOptions> schedulingOptions,
+    SchoolSettingsService schoolTime)
 {
     private readonly SchedulingOptions _opt = schedulingOptions.Value;
 
@@ -36,12 +40,14 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
                 throw new InvalidOperationException("Teachers cannot book their own offering.");
 
             var exists = await db.Bookings.AnyAsync(
-                b => b.TeacherOfferingId == teacherOfferingId && b.StartUtc == startUtc, ct);
+                b => b.TeacherOfferingId == teacherOfferingId && b.StartUtc == startUtc && b.CancelledAt == null, ct);
             if (exists)
                 throw new InvalidOperationException("That time slot is no longer available.");
 
             if (!await SlotIsWithinPublishedAvailabilityAsync(offering, startUtc, endUtc, ct))
                 throw new InvalidOperationException("Slot is outside the teacher's published weekly availability.");
+
+            await EnsureParentHasAtMostOneBookingPerSchoolDayAsync(parentUserId, startUtc, ct);
 
             var booking = new Booking
             {
@@ -63,7 +69,7 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
             await db.Entry(booking).Reference(b => b.TeacherOffering).Query().Include(o => o.Subject).Include(o => o.Teacher)
                 .LoadAsync(ct);
 
-            return ToDto(booking);
+            return ToDto(booking, await ParentMayCancelBookingAsync(booking.StartUtc, ct));
         }
         catch (DbUpdateException)
         {
@@ -72,11 +78,40 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
         }
     }
 
+    /// <summary>
+    /// Parent may cancel until (but not including) the interview's calendar day in the school time zone.
+    /// Soft delete for audit.
+    /// </summary>
+    public async Task CancelParentBookingAsync(Guid parentUserId, Guid bookingId, CancellationToken ct)
+    {
+        var booking = await db.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (booking is null || booking.ParentUserId != parentUserId)
+            throw new KeyNotFoundException();
+
+        if (booking.CancelledAt is not null)
+            throw new KeyNotFoundException();
+
+        if (!await ParentMayCancelBookingAsync(booking.StartUtc, ct))
+            throw new InvalidOperationException(
+                "Cancellations are only allowed before the day of the interview (school calendar). On the interview day it is too late to cancel online.");
+
+        booking.CancelledAt = DateTimeOffset.UtcNow;
+        booking.CancelledByUserId = parentUserId;
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task<bool> ParentMayCancelBookingAsync(DateTime startUtc, CancellationToken ct)
+    {
+        var tz = await schoolTime.GetSchoolTimeZoneAsync(ct);
+        var nowLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz);
+        var interviewLocal = TimeZoneInfo.ConvertTimeFromUtc(NormalizeBookingStartUtc(startUtc), tz);
+        return nowLocal.Date < interviewLocal.Date;
+    }
+
     private async Task<bool> SlotIsWithinPublishedAvailabilityAsync(TeacherOffering offering, DateTime startUtc,
         DateTime endUtc, CancellationToken ct)
     {
-        _ = ct;
-        var tz = TimeZoneInfo.FindSystemTimeZoneById(_opt.SchoolTimeZoneId);
+        var tz = await schoolTime.GetSchoolTimeZoneAsync(ct);
         var localStart = TimeZoneInfo.ConvertTimeFromUtc(startUtc, tz);
         var localEnd = TimeZoneInfo.ConvertTimeFromUtc(endUtc, tz);
         if (localEnd - localStart != TimeSpan.FromMinutes(_opt.SlotLengthMinutes))
@@ -99,15 +134,50 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
         return false;
     }
 
+    private async Task EnsureParentHasAtMostOneBookingPerSchoolDayAsync(Guid parentUserId, DateTime startUtc,
+        CancellationToken ct)
+    {
+        var tz = await schoolTime.GetSchoolTimeZoneAsync(ct);
+        var requestedUtc = NormalizeBookingStartUtc(startUtc);
+        var requestedLocalDate = TimeZoneInfo.ConvertTimeFromUtc(requestedUtc, tz).Date;
+
+        var existingStarts = await db.Bookings.AsNoTracking()
+            .Where(b => b.ParentUserId == parentUserId && b.CancelledAt == null)
+            .Select(b => b.StartUtc)
+            .ToListAsync(ct);
+
+        foreach (var existing in existingStarts)
+        {
+            var existingUtc = NormalizeBookingStartUtc(existing);
+            var existingLocalDate = TimeZoneInfo.ConvertTimeFromUtc(existingUtc, tz).Date;
+            if (existingLocalDate == requestedLocalDate)
+                throw new InvalidOperationException(
+                    "Only one interview per school day is allowed. You already have a booking on that date.");
+        }
+    }
+
+    private static DateTime NormalizeBookingStartUtc(DateTime startUtc) =>
+        startUtc.Kind switch
+        {
+            DateTimeKind.Utc => startUtc,
+            DateTimeKind.Local => startUtc.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(startUtc, DateTimeKind.Utc)
+        };
+
     public async Task<IReadOnlyList<BookingDto>> ListForParentAsync(Guid parentUserId, CancellationToken ct)
     {
         var rows = await db.Bookings.AsNoTracking()
+            .Include(b => b.Parent)
             .Include(b => b.TeacherOffering).ThenInclude(o => o.Subject)
             .Include(b => b.TeacherOffering).ThenInclude(o => o.Teacher)
-            .Where(b => b.ParentUserId == parentUserId)
+            .Where(b => b.ParentUserId == parentUserId && b.CancelledAt == null)
             .OrderBy(b => b.StartUtc)
             .ToListAsync(ct);
-        return rows.Select(ToDto).ToList();
+
+        var list = new List<BookingDto>(rows.Count);
+        foreach (var b in rows)
+            list.Add(ToDto(b, await ParentMayCancelBookingAsync(b.StartUtc, ct)));
+        return list;
     }
 
     public async Task<IReadOnlyList<BookingDto>> ListForTeacherAsync(Guid teacherUserId, CancellationToken ct)
@@ -115,13 +185,43 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
         var rows = await db.Bookings.AsNoTracking()
             .Include(b => b.Parent)
             .Include(b => b.TeacherOffering).ThenInclude(o => o.Subject)
-            .Where(b => b.TeacherOffering.TeacherUserId == teacherUserId)
+            .Where(b => b.TeacherOffering.TeacherUserId == teacherUserId && b.CancelledAt == null)
             .OrderBy(b => b.StartUtc)
             .ToListAsync(ct);
-        return rows.Select(ToDto).ToList();
+        return rows.Select(b => ToDto(b, false)).ToList();
     }
 
-    private static BookingDto ToDto(Booking b)
+    public async Task<IReadOnlyList<CancelledBookingAuditDto>> ListCancelledBookingsAuditAsync(CancellationToken ct)
+    {
+        var rows = await db.Bookings.AsNoTracking()
+            .Include(b => b.Parent)
+            .Include(b => b.TeacherOffering).ThenInclude(o => o.Subject)
+            .Include(b => b.TeacherOffering).ThenInclude(o => o.Teacher)
+            .Where(b => b.CancelledAt != null)
+            .OrderByDescending(b => b.CancelledAt)
+            .Take(250)
+            .ToListAsync(ct);
+
+        return rows.Select(b =>
+        {
+            var o = b.TeacherOffering;
+            return new CancelledBookingAuditDto(
+                b.Id,
+                b.CancelledAt,
+                b.CancelledByUserId,
+                b.StartUtc,
+                b.EndUtc,
+                b.Parent.Email,
+                b.Parent.DisplayName,
+                o.Teacher.DisplayName,
+                o.Subject.Name,
+                o.CourseTitle,
+                o.GradeLevel,
+                o.SectionLabel);
+        }).ToList();
+    }
+
+    private BookingDto ToDto(Booking b, bool canCancel)
     {
         var o = b.TeacherOffering;
         return new BookingDto(
@@ -137,7 +237,8 @@ public sealed class BookingService(AppDbContext db, IOptions<SchedulingOptions> 
             b.RelationshipToStudent,
             o.Teacher.DisplayName,
             b.Parent.DisplayName,
-            b.Parent.Email);
+            b.Parent.Email,
+            canCancel);
     }
 }
 
@@ -154,4 +255,5 @@ public sealed record BookingDto(
     string RelationshipToStudent,
     string TeacherDisplayName,
     string ParentDisplayName,
-    string ParentEmail);
+    string ParentEmail,
+    bool CanCancel);

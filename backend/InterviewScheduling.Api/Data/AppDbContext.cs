@@ -10,6 +10,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<TeacherOffering> TeacherOfferings => Set<TeacherOffering>();
     public DbSet<WeeklyAvailability> WeeklyAvailabilities => Set<WeeklyAvailability>();
     public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<SchoolSettings> SchoolSettings => Set<SchoolSettings>();
     public DbSet<TeacherAccessRequest> TeacherAccessRequests => Set<TeacherAccessRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -67,10 +68,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             e.Property(x => x.StudentSchoolEmail).HasMaxLength(320);
             e.Property(x => x.InterviewAttendeeName).HasMaxLength(200);
             e.Property(x => x.RelationshipToStudent).HasMaxLength(120);
-            e.HasIndex(x => new { x.TeacherOfferingId, x.StartUtc }).IsUnique();
+            e.HasIndex(x => new { x.TeacherOfferingId, x.StartUtc }).IsUnique()
+                .HasFilter("\"CancelledAt\" IS NULL");
             e.HasOne(x => x.TeacherOffering).WithMany(x => x.Bookings).HasForeignKey(x => x.TeacherOfferingId)
                 .OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Parent).WithMany().HasForeignKey(x => x.ParentUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<SchoolSettings>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SchoolTimeZoneId).HasMaxLength(128);
         });
     }
 }

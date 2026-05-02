@@ -20,6 +20,28 @@ public sealed class BookingsController(BookingService bookingService) : Controll
         return Ok(rows);
     }
 
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Cancel(Guid id, CancellationToken ct)
+    {
+        var parentId = User.GetUserId();
+        try
+        {
+            await bookingService.CancelParentBookingAsync(parentId, id, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(BookingDto), StatusCodes.Status201Created)]
     public async Task<ActionResult<BookingDto>> Create([FromBody] CreateBookingRequest body, CancellationToken ct)
@@ -38,6 +60,8 @@ public sealed class BookingsController(BookingService bookingService) : Controll
         catch (InvalidOperationException ex)
         {
             if (ex.Message.Contains("Complete your meeting profile", StringComparison.Ordinal))
+                return BadRequest(new { message = ex.Message });
+            if (ex.Message.Contains("Only one interview per school day", StringComparison.Ordinal))
                 return BadRequest(new { message = ex.Message });
             return Conflict(new { message = ex.Message });
         }

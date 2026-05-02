@@ -20,6 +20,12 @@ public sealed class EmailLoginRequest
     public string Password { get; set; } = "";
 }
 
+public sealed class UpdateSchoolSettingsRequest
+{
+    /// <summary>IANA time zone id (e.g. America/New_York).</summary>
+    public string SchoolTimeZoneId { get; set; } = "";
+}
+
 public sealed class CreateTeacherOfferingRequest
 {
     public Guid SubjectId { get; set; }

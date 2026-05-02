@@ -51,6 +51,8 @@ export interface Booking {
   teacherDisplayName: string;
   parentDisplayName: string;
   parentEmail: string;
+  /** Parent: true if cancellation is still allowed (before interview day, school calendar). */
+  canCancel: boolean;
 }
 
 export interface ParentMeetingProfile {
@@ -74,4 +76,25 @@ export interface TeacherAccessRequestListItem {
   message: string | null;
   status: number;
   createdAt: string;
+}
+
+export interface SchoolSettingsResponse {
+  schoolTimeZoneId: string;
+  updatedAt: string | null;
+  updatedByDirectorId: string | null;
+}
+
+export interface CancelledBookingAuditRow {
+  id: string;
+  cancelledAt: string | null;
+  cancelledByUserId: string | null;
+  startUtc: string;
+  endUtc: string;
+  parentEmail: string;
+  parentDisplayName: string;
+  teacherDisplayName: string;
+  subjectName: string;
+  courseTitle: string;
+  gradeLevel: string;
+  sectionLabel: string;
 }

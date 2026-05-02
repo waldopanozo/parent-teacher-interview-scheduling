@@ -44,3 +44,38 @@ public sealed class UserProfileDto(Guid id, string email, string displayName, Ap
     /// <summary>For parents: all meeting fields saved. Always true for Teacher/Director.</summary>
     public bool MeetingProfileComplete { get; } = meetingProfileComplete;
 }
+
+public sealed class SchoolSettingsResponseDto(string schoolTimeZoneId, DateTimeOffset? updatedAt, Guid? updatedByDirectorId)
+{
+    public string SchoolTimeZoneId { get; } = schoolTimeZoneId;
+    public DateTimeOffset? UpdatedAt { get; } = updatedAt;
+    public Guid? UpdatedByDirectorId { get; } = updatedByDirectorId;
+}
+
+public sealed class CancelledBookingAuditDto(
+    Guid id,
+    DateTimeOffset? cancelledAt,
+    Guid? cancelledByUserId,
+    DateTime startUtc,
+    DateTime endUtc,
+    string parentEmail,
+    string parentDisplayName,
+    string teacherDisplayName,
+    string subjectName,
+    string courseTitle,
+    string gradeLevel,
+    string sectionLabel)
+{
+    public Guid Id { get; } = id;
+    public DateTimeOffset? CancelledAt { get; } = cancelledAt;
+    public Guid? CancelledByUserId { get; } = cancelledByUserId;
+    public DateTime StartUtc { get; } = startUtc;
+    public DateTime EndUtc { get; } = endUtc;
+    public string ParentEmail { get; } = parentEmail;
+    public string ParentDisplayName { get; } = parentDisplayName;
+    public string TeacherDisplayName { get; } = teacherDisplayName;
+    public string SubjectName { get; } = subjectName;
+    public string CourseTitle { get; } = courseTitle;
+    public string GradeLevel { get; } = gradeLevel;
+    public string SectionLabel { get; } = sectionLabel;
+}
