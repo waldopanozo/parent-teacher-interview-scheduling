@@ -3,6 +3,7 @@ using InterviewScheduling.Api.Data;
 using InterviewScheduling.Api.Domain;
 using InterviewScheduling.Api.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace InterviewScheduling.Api.Services;
@@ -10,7 +11,8 @@ namespace InterviewScheduling.Api.Services;
 public sealed class BookingService(
     AppDbContext db,
     IOptions<SchedulingOptions> schedulingOptions,
-    SchoolSettingsService schoolTime)
+    SchoolSettingsService schoolTime,
+    ILogger<BookingService> log)
 {
     private readonly SchedulingOptions _opt = schedulingOptions.Value;
 
@@ -69,6 +71,10 @@ public sealed class BookingService(
             await db.Entry(booking).Reference(b => b.Parent).LoadAsync(ct);
             await db.Entry(booking).Reference(b => b.TeacherOffering).Query().Include(o => o.Subject).Include(o => o.Teacher)
                 .LoadAsync(ct);
+
+            log.LogInformation(
+                "BookingCreated bookingId={BookingId} teacherOfferingId={TeacherOfferingId} parentUserId={ParentUserId} startUtc={StartUtc:o}",
+                booking.Id, teacherOfferingId, parentUserId, startUtc);
 
             return ToDto(booking, await ParentMayCancelBookingAsync(booking.StartUtc, ct));
         }

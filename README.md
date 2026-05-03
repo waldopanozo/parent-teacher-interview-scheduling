@@ -22,7 +22,8 @@ Documentation in this repo is **English** for portfolio consistency. UI copy in 
 14. [Further reading](#further-reading)
 15. [Testing](#testing)
 16. [Stack & CI](#stack--ci)
-17. [License](#license)
+17. [Engineering notebook](#engineering-notebook)
+18. [License](#license)
 
 ## What you get
 
@@ -69,6 +70,28 @@ See [docs/flows-and-roles.md](docs/flows-and-roles.md) for step-by-step flows an
 **Account linking:** if an email already has an email/password account, Google sign-in with that same email is rejected (clear error message) to avoid duplicate identities.
 
 **Environments:** OpenAPI (`/openapi/v1.json`) is mapped in **Development** only. Demo user seeding runs only in **Development** (see below).
+
+## Engineering notebook
+
+### Architecture and ADRs
+
+- **Containers and data flow**: [docs/architecture.md](docs/architecture.md) (includes a Mermaid diagram: browser → nginx → API → PostgreSQL, plus Google token validation).
+- **Decision log**: [docs/adr/README.md](docs/adr/README.md) — integration testing strategy, booking cancellation/audit rules, and HTTP observability trade-offs.
+
+### Security posture (demo scope)
+
+- **JWT**: HS256 access tokens; signing key from configuration (`Jwt__SigningKey` / Compose). **Rotate** keys and lengths for any public deployment.
+- **Passwords**: **BCrypt** for email/password accounts; Google-only users have **no** local password hash (`hasPasswordLogin` is false).
+- **Google tokens**: API validates **`id_token`** server-side; the SPA never sends Google **secrets** to this backend.
+- **CORS**: default policy allows the nginx origin (`Cors:AllowedOrigins`); tighten for production hosts only.
+- **Rate limiting / bot protection**: **not implemented** in this sample (would normally sit at API gateway or reverse proxy). Documented here so reviewers do not assume it exists.
+- **Secrets**: use a vault or managed secrets in real environments; `.env` in this repo is for **local/demo** only.
+
+### Observability and health
+
+- **`GET /health`**: database-backed health check (EF Core). Same path in Docker and tests; see [docs/api-reference.md](docs/api-reference.md).
+- **`X-Request-Id`**: optional inbound header; the API **echoes** it and adds a logging **scope** so structured logs for that request can be correlated.
+- **Structured business log**: successful **`POST /api/v1/parent/bookings`** emits a **`BookingCreated`** `LogInformation` event with ids and `startUtc` (see ADR 003).
 
 ## UI, branding, and passwords
 
@@ -202,6 +225,7 @@ If you change code frequently without rebuilding Docker images:
 
 Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common paths:
 
+- `GET /health` — aggregate health (includes database check); **no JWT**.
 - `POST /api/v1/auth/google` — exchange Google `id_token` for JWT.
 - `POST /api/v1/auth/register` — create account with email + password + display name; returns JWT.
 - `POST /api/v1/auth/email-login` — sign in with email + password; returns JWT.
@@ -224,6 +248,8 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 | [docs/testing.md](docs/testing.md) | How to run unit, integration, and e2e tests locally; what CI runs. |
 | [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md) | Commit listing for 2026-04-30 and notes on later features. |
 | [docs/changelog-2026-05-02.md](docs/changelog-2026-05-02.md) | Commit listing for 2026-05-02 (bookings, settings, theme/logo). |
+| [docs/architecture.md](docs/architecture.md) | Container-level diagram (Mermaid) and performance notes. |
+| [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records (tests, bookings, HTTP ops). |
 | [frontend/README.md](frontend/README.md) | Optional local `npm start`, proxy, and frontend test commands. |
 
 ## Testing
@@ -234,13 +260,13 @@ See [docs/testing.md](docs/testing.md) for the full matrix (unit, integration, P
 
 1. **Backend**: `cd backend/InterviewScheduling.Api.Tests && dotnet test`
 2. **Frontend e2e (smoke, no Docker API)**: `cd frontend && npm run build && npm run test:e2e` — Playwright starts a static server on **4179**; demo-account tests are **skipped**.
-3. **Frontend e2e including demo accounts**: Start the stack from the repo root with **`docker compose up --build`**, put **`E2E_STACK_URL=http://127.0.0.1:3456`** in `.env` (same folder as Compose) or in `frontend/.env`, then `cd frontend && npm run build && npm run test:e2e`.
+3. **Frontend e2e including demo accounts**: Start the stack from the repo root with **`docker compose up --build`**, put **`E2E_STACK_URL=http://127.0.0.1:3456`** in `.env` (same folder as Compose) or in `frontend/.env`, then **`npm run test:e2e:stack`** in `frontend/` (or `make frontend-e2e-stack` from the repo root after `npm install` in `frontend/`).
 
 Compose picks up `.env` next to `docker-compose.yml` automatically; Playwright loads that file (and `frontend/.env`) via `dotenv` in `playwright.config.ts`. With Docker + `E2E_STACK_URL`, Playwright also runs **flow** specs (registration, booking/cancel, teacher offering, director subject CRUD, teacher-access approval); see [docs/testing.md](docs/testing.md).
 
 ## Stack & CI
 
-- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords.
+- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords, **`GET /health`** (DB check), **`X-Request-Id`** middleware, structured log on successful parent booking creation.
 - **Frontend**: Angular (standalone, lazy routes), Google Identity Services, Syne + Outfit (Google Fonts) on the sign-in experience.
 - **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`** (demo Playwright tests skip without `E2E_STACK_URL`). Karma is not run in CI; use `npm test` locally when changing Angular services or components.
 

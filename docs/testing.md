@@ -24,6 +24,8 @@ Project: `backend/InterviewScheduling.Api.Tests`
   - `ParentMeetingProfileApiTests` — meeting profile PUT/GET and `auth/me` `meetingProfileComplete`.
   - `AuthPasswordApiTests` — `hasPasswordLogin` on `auth/me`, `PUT auth/password` (success, wrong password, Google-only user).
   - `CatalogSchoolConfigApiTests` — anonymous `GET catalog/school-config` returns branding fields.
+  - `TeacherBookingsApiTests` — `GET teacher/bookings` maps DTOs with **teacher display name** (regression for EF `Include` on `TeacherOffering.Teacher`).
+  - `HealthEndpointTests` — `GET /health` returns **Healthy** in the Testing host.
 
 Run locally:
 

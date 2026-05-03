@@ -7,6 +7,14 @@ Base URL examples:
 
 Unless noted, requests send header `Authorization: Bearer <jwt>`.
 
+## Operations
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/health` | No | Aggregate health (includes EF Core **database** check). Intended for load balancers / orchestrators. Response body is the default ASP.NET Core health report format. |
+
+Clients may send **`X-Request-Id`** (any string); the API echoes the same value on the response and attaches it to structured logs for the request.
+
 ## Auth
 
 | Method | Path | Auth | Description |
