@@ -90,8 +90,10 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     var schedOpts = builder.Configuration.GetSection(SchedulingOptions.SectionName).Get<SchedulingOptions>()
                     ?? new SchedulingOptions();
+    var applyConfigUiLanguageToSchool =
+        app.Configuration.GetValue("Seed:ApplyConfigUiLanguageToSchool", false);
     await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log, schedOpts.SchoolTimeZoneId, schedOpts.UiLanguage,
-        schedOpts.ThemePreset);
+        schedOpts.ThemePreset, applyConfigUiLanguageToSchool);
 }
 
 if (app.Environment.IsDevelopment())

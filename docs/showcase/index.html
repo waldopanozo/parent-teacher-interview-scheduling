@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Showcase — Parent–teacher interview scheduling</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.5; }
+    body { margin: 0 auto; max-width: 960px; padding: 1.25rem; }
+    h1 { font-size: 1.35rem; }
+    figure { margin: 1.5rem 0; border-radius: 8px; overflow: hidden; background: color-mix(in srgb, Canvas 92%, CanvasText); }
+    figcaption { padding: 0.5rem 0.75rem; font-size: 0.9rem; opacity: 0.9; }
+    img, video { display: block; width: 100%; height: auto; vertical-align: middle; }
+    video { background: #111; }
+    details { margin-top: 1.5rem; font-size: 0.9rem; }
+    .note { font-size: 0.9rem; opacity: 0.92; margin-top: 0.75rem; }
+  </style>
+</head>
+<body>
+  <h1>Showcase (screenshots + video)</h1>
+  <p>
+    Static gallery. Generate files under <code>assets/</code> with
+    <code>cd frontend && npm run capture:showcase</code>
+    (or <code>make frontend-showcase</code> from the repo root).
+    With <code>E2E_STACK_URL</code> in <code>.env</code> and Docker running, parent and teacher dashboard shots are included too.
+  </p>
+  <p class="note">
+    <strong>UI language:</strong> Captures use <strong>English</strong> UI strings: Playwright sets <code>localStorage</code> key <code>e2eUiLang</code> to <code>en</code> before load, which overrides catalog <code>uiLanguage</code> for translations. School branding that does not go through i18n may still match server data. When using <strong>Docker</strong> (<code>E2E_STACK_URL</code>), rebuild the frontend image so the running bundle includes that override (for example <code>docker compose build</code> then <code>up</code>).
+  </p>
+  <p class="note">
+    <strong>Chrome and WebM:</strong> Google <strong>Chrome plays WebM</strong> in this page without extra codecs.
+    If the video appears blank, open the gallery over <code>http://localhost</code> (any static server) instead of <code>file://</code>, which can block media on some setups.
+    Safari does not support WebM in the player; use Chrome/Edge/Firefox for preview, or transcode to MP4 for Safari.
+  </p>
+
+  <figure>
+    <figcaption>01 — Sign in</figcaption>
+    <img src="assets/01-login.png" alt="Sign-in screen" width="1280" height="720" loading="lazy" />
+  </figure>
+
+  <figure>
+    <figcaption>02 — Forgot password</figcaption>
+    <img src="assets/02-forgot-password.png" alt="Forgot password" width="1280" height="720" loading="lazy" />
+  </figure>
+
+  <figure>
+    <figcaption>03 — Parent dashboard (demo stack only)</figcaption>
+    <img src="assets/03-parent-dashboard.png" alt="Parent dashboard" width="1280" height="720" loading="lazy" />
+  </figure>
+
+  <figure>
+    <figcaption>04 — Teacher dashboard (demo stack only)</figcaption>
+    <img src="assets/04-teacher-dashboard.png" alt="Teacher dashboard" width="1280" height="720" loading="lazy" />
+  </figure>
+
+  <figure>
+    <figcaption>Walkthrough (WebM)</figcaption>
+    <video controls playsinline preload="metadata" width="1280" height="720">
+      <source src="assets/walkthrough.webm" type="video/webm" />
+      Your browser cannot play embedded WebM; open <code>assets/walkthrough.webm</code> directly.
+    </video>
+  </figure>
+
+  <details>
+    <summary>Publish on GitHub Pages</summary>
+    <p>
+      Upload the <code>docs/showcase/</code> folder (including <code>assets/</code> after you run the capture), or point Pages at <code>/docs</code>
+      and link to <code>showcase/index.html</code> according to your branch layout.
+    </p>
+  </details>
+</body>
+</html>

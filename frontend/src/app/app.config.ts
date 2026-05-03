@@ -9,7 +9,18 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/auth.interceptor';
 import { SchoolPublicConfig } from './core/api.types';
 import { SchoolBrandingService } from './core/school-branding.service';
+import { E2E_UI_LANG_STORAGE_KEY } from './e2e-ui-lang.constants';
 import { environment } from '../environments/environment';
+
+function resolveUiLang(cfgUiLanguage: string | undefined): 'en' | 'es' {
+  try {
+    const forced = localStorage.getItem(E2E_UI_LANG_STORAGE_KEY)?.trim().toLowerCase();
+    if (forced === 'en' || forced === 'es') return forced;
+  } catch {
+    /* no localStorage (SSR / private mode edge cases) */
+  }
+  return cfgUiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+}
 
 export function schoolLocaleInitializer(
   http: HttpClient,
@@ -21,7 +32,7 @@ export function schoolLocaleInitializer(
       http.get<SchoolPublicConfig>(`${environment.apiBaseUrl}/v1/catalog/school-config`).pipe(
         switchMap((cfg) => {
           branding.applyPublicConfig(cfg);
-          const lang = cfg.uiLanguage?.toLowerCase().startsWith('es') ? 'es' : 'en';
+          const lang = resolveUiLang(cfg.uiLanguage);
           translate.setFallbackLang('en');
           return translate.use(lang);
         }),
@@ -34,7 +45,8 @@ export function schoolLocaleInitializer(
             brandingVersion: 0
           });
           translate.setFallbackLang('en');
-          return translate.use('en');
+          const lang = resolveUiLang('en');
+          return translate.use(lang);
         })
       )
     );
