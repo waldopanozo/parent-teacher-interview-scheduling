@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
 import { ScheduleApiService } from '../../core/schedule-api.service';
 
 @Component({
   selector: 'app-parent-meeting-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TranslatePipe],
   templateUrl: './parent-meeting-profile.component.html',
   styleUrl: './parent-meeting-profile.component.scss'
 })

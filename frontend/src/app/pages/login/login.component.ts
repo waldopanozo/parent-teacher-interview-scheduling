@@ -1,27 +1,38 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, inject, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  inject,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth.service';
+import { SchoolBrandingService } from '../../core/school-branding.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipe, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss'
 })
-export class LoginComponent implements AfterViewInit {
+export class LoginComponent implements OnInit, AfterViewInit {
   @ViewChild('googleButton', { static: true }) googleButton!: ElementRef<HTMLDivElement>;
 
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  readonly branding = inject(SchoolBrandingService);
 
   readonly loginForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -39,6 +50,13 @@ export class LoginComponent implements AfterViewInit {
 
   errorMessage: string | null = null;
   infoMessage: string | null = null;
+
+  ngOnInit(): void {
+    const reg = this.route.snapshot.queryParamMap.get('register');
+    if (reg === '1' || reg === 'true') {
+      this.isRegisterMode = true;
+    }
+  }
 
   ngAfterViewInit(): void {
     this.initGoogleButton();
@@ -74,13 +92,6 @@ export class LoginComponent implements AfterViewInit {
       next: () => this.navigateAfterAuth(),
       error: (err) => this.setHttpError(err)
     });
-  }
-
-  forgotPasswordClick(event: Event): void {
-    event.preventDefault();
-    this.infoMessage =
-      'Password recovery is not available yet. Use Google sign-in or contact your school administrator.';
-    this.errorMessage = null;
   }
 
   private initGoogleButton(): void {

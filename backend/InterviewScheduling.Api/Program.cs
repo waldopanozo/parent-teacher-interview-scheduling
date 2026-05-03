@@ -1,5 +1,6 @@
 using System.Text;
 using InterviewScheduling.Api.Data;
+using InterviewScheduling.Api.Middleware;
 using InterviewScheduling.Api.Options;
 using InterviewScheduling.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -26,6 +27,7 @@ else
 
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<SchoolSettingsService>();
 builder.Services.AddScoped<SlotGenerator>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<WeeklyAvailabilityService>();
@@ -55,6 +57,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("database");
+
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? ["http://localhost:3456"];
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
     p.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
@@ -83,7 +88,10 @@ await using (var scope = app.Services.CreateAsyncScope())
         seedDemoFlag,
         seedDemoPasswordUsers);
 
-    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log);
+    var schedOpts = builder.Configuration.GetSection(SchedulingOptions.SectionName).Get<SchedulingOptions>()
+                    ?? new SchedulingOptions();
+    await DbSeeder.SeedAsync(db, seedDemoPasswordUsers, log, schedOpts.SchoolTimeZoneId, schedOpts.UiLanguage,
+        schedOpts.ThemePreset);
 }
 
 if (app.Environment.IsDevelopment())
@@ -92,8 +100,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseMiddleware<RequestCorrelationMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
 app.MapControllers();
 await app.RunAsync();
 

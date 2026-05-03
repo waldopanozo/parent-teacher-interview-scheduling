@@ -1,4 +1,5 @@
 using InterviewScheduling.Api.Domain;
+using InterviewScheduling.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -9,9 +10,13 @@ public static class DbSeeder
     /// <summary>Demo password for seeded accounts (email/password login).</summary>
     public const string DemoPassword = "password";
 
-    /// <param name="seedDemoPasswordUsers">When true, ensures Parent/Teacher/Director demo logins (never enabled in Production).</param>
-    public static async Task SeedAsync(AppDbContext db, bool seedDemoPasswordUsers, ILogger logger)
+    /// <param name="configDefaultTimeZoneId">Fallback IANA id from configuration when no row exists yet.</param>
+    public static async Task SeedAsync(AppDbContext db, bool seedDemoPasswordUsers, ILogger logger,
+        string configDefaultTimeZoneId, string configDefaultUiLanguage, string configDefaultThemePreset)
     {
+        await EnsureSchoolSettingsAsync(db, configDefaultTimeZoneId, configDefaultUiLanguage, configDefaultThemePreset,
+            logger);
+
         var subjectsAdded = await SeedSubjectsIfEmptyAsync(db);
         if (subjectsAdded > 0)
             logger.LogInformation("Seeded {Count} subjects (MATH, SCI, ENG, SOC).", subjectsAdded);
@@ -150,5 +155,34 @@ public static class DbSeeder
             await db.SaveChangesAsync();
 
         return added;
+    }
+
+    private static async Task EnsureSchoolSettingsAsync(AppDbContext db, string configDefaultTimeZoneId,
+        string configDefaultUiLanguage, string configDefaultThemePreset, ILogger logger)
+    {
+        var exists = await db.SchoolSettings.AnyAsync(x => x.Id == SchoolSettingsService.SingletonId);
+        if (exists)
+            return;
+
+        var tz = string.IsNullOrWhiteSpace(configDefaultTimeZoneId) ? "UTC" : configDefaultTimeZoneId.Trim();
+        var lang = string.IsNullOrWhiteSpace(configDefaultUiLanguage) ? "en" : configDefaultUiLanguage.Trim();
+        if (!lang.Equals("es", StringComparison.OrdinalIgnoreCase))
+            lang = "en";
+        var theme = string.IsNullOrWhiteSpace(configDefaultThemePreset)
+            ? SchoolThemePreset.Default
+            : SchoolThemePreset.Normalize(configDefaultThemePreset);
+        db.SchoolSettings.Add(new SchoolSettings
+        {
+            Id = SchoolSettingsService.SingletonId,
+            SchoolTimeZoneId = tz,
+            UiLanguage = lang,
+            ThemePreset = theme,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            UpdatedByDirectorId = null
+        });
+        await db.SaveChangesAsync();
+        logger.LogInformation(
+            "Seeded school settings row with time zone {TimeZoneId}, language {Lang}, theme {Theme}.",
+            tz, lang, theme);
     }
 }

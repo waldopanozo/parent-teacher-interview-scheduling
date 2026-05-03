@@ -20,6 +20,17 @@ public sealed class TeacherOfferingSummaryDto(
     public string SectionLabel { get; } = sectionLabel;
 }
 
+/// <summary>IANA time zone id used for slots, weekly windows, and UI date formatting.</summary>
+public sealed record SchoolTimeZonePublicDto(string SchoolTimeZoneId);
+
+/// <summary>Public school branding for locale, theme, and logo (no auth).</summary>
+public sealed record SchoolPublicConfigDto(
+    string SchoolTimeZoneId,
+    string UiLanguage,
+    string ThemePreset,
+    bool HasCustomLogo,
+    long BrandingVersion);
+
 public sealed class SubjectSummaryDto(Guid id, string code, string name)
 {
     public Guid Id { get; } = id;
@@ -34,7 +45,13 @@ public sealed class AuthResponseDto(string accessToken, DateTime expiresAtUtc, U
     public UserProfileDto User { get; } = user;
 }
 
-public sealed class UserProfileDto(Guid id, string email, string displayName, AppRole role, bool meetingProfileComplete)
+public sealed class UserProfileDto(
+    Guid id,
+    string email,
+    string displayName,
+    AppRole role,
+    bool meetingProfileComplete,
+    bool hasPasswordLogin)
 {
     public Guid Id { get; } = id;
     public string Email { get; } = email;
@@ -43,4 +60,76 @@ public sealed class UserProfileDto(Guid id, string email, string displayName, Ap
 
     /// <summary>For parents: all meeting fields saved. Always true for Teacher/Director.</summary>
     public bool MeetingProfileComplete { get; } = meetingProfileComplete;
+
+    /// <summary>True when the user can sign in with email + password (can use change-password).</summary>
+    public bool HasPasswordLogin { get; } = hasPasswordLogin;
+}
+
+public sealed class SchoolSettingsResponseDto(
+    string schoolTimeZoneId,
+    string uiLanguage,
+    string themePreset,
+    bool hasCustomLogo,
+    long brandingVersion,
+    DateTimeOffset? updatedAt,
+    Guid? updatedByDirectorId)
+{
+    public string SchoolTimeZoneId { get; } = schoolTimeZoneId;
+    public string UiLanguage { get; } = uiLanguage;
+    public string ThemePreset { get; } = themePreset;
+    public bool HasCustomLogo { get; } = hasCustomLogo;
+    public long BrandingVersion { get; } = brandingVersion;
+    public DateTimeOffset? UpdatedAt { get; } = updatedAt;
+    public Guid? UpdatedByDirectorId { get; } = updatedByDirectorId;
+}
+
+public sealed class VisitAuditSummaryDto(int totalBookings, int cancelledCount, int activeCount)
+{
+    public int TotalBookings { get; } = totalBookings;
+    public int CancelledCount { get; } = cancelledCount;
+    public int ActiveCount { get; } = activeCount;
+}
+
+public sealed class VisitAuditRowDto(
+    Guid id,
+    DateTimeOffset createdAt,
+    bool isCancelled,
+    DateTimeOffset? cancelledAt,
+    Guid? cancelledByUserId,
+    DateTime startUtc,
+    DateTime endUtc,
+    string studentSchoolEmail,
+    string parentEmail,
+    string parentDisplayName,
+    string teacherDisplayName,
+    string subjectName,
+    string courseTitle,
+    string gradeLevel,
+    string sectionLabel,
+    AttendanceStatus attendanceStatus,
+    string? visitNotes)
+{
+    public Guid Id { get; } = id;
+    public DateTimeOffset CreatedAt { get; } = createdAt;
+    public bool IsCancelled { get; } = isCancelled;
+    public DateTimeOffset? CancelledAt { get; } = cancelledAt;
+    public Guid? CancelledByUserId { get; } = cancelledByUserId;
+    public DateTime StartUtc { get; } = startUtc;
+    public DateTime EndUtc { get; } = endUtc;
+    public string StudentSchoolEmail { get; } = studentSchoolEmail;
+    public string ParentEmail { get; } = parentEmail;
+    public string ParentDisplayName { get; } = parentDisplayName;
+    public string TeacherDisplayName { get; } = teacherDisplayName;
+    public string SubjectName { get; } = subjectName;
+    public string CourseTitle { get; } = courseTitle;
+    public string GradeLevel { get; } = gradeLevel;
+    public string SectionLabel { get; } = sectionLabel;
+    public AttendanceStatus AttendanceStatus { get; } = attendanceStatus;
+    public string? VisitNotes { get; } = visitNotes;
+}
+
+public sealed class VisitAuditPageDto(IReadOnlyList<VisitAuditRowDto> items, VisitAuditSummaryDto? summary)
+{
+    public IReadOnlyList<VisitAuditRowDto> Items { get; } = items;
+    public VisitAuditSummaryDto? Summary { get; } = summary;
 }

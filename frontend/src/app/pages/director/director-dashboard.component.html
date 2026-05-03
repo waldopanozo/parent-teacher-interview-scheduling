@@ -1,21 +1,224 @@
-<section class="panel">
-  <h2>Director workspace</h2>
-  <p class="muted">
-    Approve teacher access requests, maintain subjects, assign teacher offerings (subject, course, grade, section), and
-    edit weekly availability for any offering.
-  </p>
+<div class="dashboard-page">
+  <header class="page-header">
+    <div class="page-header__titles">
+      <h1 class="page-title">{{ 'director.title' | translate }}</h1>
+      <p class="page-sub">{{ 'director.intro' | translate }}</p>
+    </div>
+  </header>
 
   <div class="grid">
+    <div class="card">
+      <h3>{{ 'director.schoolTz' | translate }}</h3>
+      <p class="muted small">{{ 'director.schoolTzHint' | translate }}</p>
+      <label class="field">
+        <span>{{ 'director.filterTz' | translate }}</span>
+        <input
+          [(ngModel)]="tzFilter"
+          (ngModelChange)="rebuildTimeZoneDatalist()"
+          [placeholder]="'director.tzPlaceholder' | translate"
+          autocomplete="off"
+        />
+      </label>
+      <label class="field">
+        <span>{{ 'director.tzField' | translate }}</span>
+        <input
+          [(ngModel)]="editTimeZoneId"
+          (ngModelChange)="rebuildTimeZoneDatalist()"
+          list="school-tz-datalist"
+          autocomplete="off"
+        />
+        <datalist id="school-tz-datalist">
+          <option *ngFor="let z of timeZonesForDatalist" [value]="z"></option>
+        </datalist>
+      </label>
+      <label class="field">
+        <span>{{ 'director.uiLanguage' | translate }}</span>
+        <select [(ngModel)]="editUiLanguage">
+          <option ngValue="en">{{ 'director.langEn' | translate }}</option>
+          <option ngValue="es">{{ 'director.langEs' | translate }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'director.themePreset' | translate }}</span>
+        <select [(ngModel)]="editThemePreset">
+          <option *ngFor="let tid of themePresetIds" [ngValue]="tid">
+            {{ ('theme.preset.' + tid) | translate }}
+          </option>
+        </select>
+      </label>
+      <p class="muted small">{{ 'director.themePresetHint' | translate }}</p>
+      <div class="logo-row">
+        <div class="logo-preview-wrap">
+          <img
+            class="logo-preview"
+            [src]="branding.getLogoSrc()"
+            alt=""
+            width="64"
+            height="64"
+          />
+        </div>
+        <div class="logo-actions">
+          <span class="logo-heading">{{ 'director.logoTitle' | translate }}</span>
+          <p class="muted small">{{ 'director.logoHint' | translate }}</p>
+          <label class="btn secondary file-upload">
+            {{ 'director.uploadLogo' | translate }}
+            <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" (change)="onSchoolLogoSelected($event)" />
+          </label>
+          <button
+            type="button"
+            class="btn secondary"
+            (click)="clearSchoolLogo()"
+            [disabled]="!schoolSettings?.hasCustomLogo"
+          >
+            {{ 'director.removeLogo' | translate }}
+          </button>
+        </div>
+      </div>
+      <button type="button" class="btn" (click)="saveSchoolSettings()">
+        {{ 'director.saveSettings' | translate }}
+      </button>
+      <p class="muted small" *ngIf="schoolSettings?.updatedAt">
+        <span>{{ 'director.lastUpdatedLabel' | translate }}</span>
+        {{ schoolSettings!.updatedAt! | date : 'medium' : displaySchoolTimeZoneId }}
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>{{ 'director.subjectsTitle' | translate }}</h3>
+      <label class="field">
+        <span>{{ 'director.code' | translate }}</span>
+        <input [(ngModel)]="newSubjectCode" placeholder="e.g. CS101" />
+      </label>
+      <label class="field">
+        <span>{{ 'director.name' | translate }}</span>
+        <input [(ngModel)]="newSubjectName" placeholder="e.g. Computing" />
+      </label>
+      <button type="button" class="btn" (click)="createSubject()">{{ 'director.addSubject' | translate }}</button>
+      <table *ngIf="subjects.length">
+        <thead>
+          <tr>
+            <th>{{ 'director.code' | translate }}</th>
+            <th>{{ 'director.name' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of subjects">
+            <td>{{ s.code }}</td>
+            <td>{{ s.name }}</td>
+            <td>
+              <button type="button" class="btn secondary" (click)="startEditSubject(s)">
+                {{ 'director.edit' | translate }}
+              </button>
+              <button type="button" class="btn danger" (click)="deleteSubject(s)">
+                {{ 'director.delete' | translate }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="editingSubject">
+        <h4 class="small">{{ 'director.editSubject' | translate }}</h4>
+        <label class="field">
+          <span>{{ 'director.code' | translate }}</span>
+          <input [(ngModel)]="editSubjectCode" />
+        </label>
+        <label class="field">
+          <span>{{ 'director.name' | translate }}</span>
+          <input [(ngModel)]="editSubjectName" />
+        </label>
+        <button type="button" class="btn" (click)="saveSubjectEdit()">{{ 'director.save' | translate }}</button>
+        <button type="button" class="btn secondary" (click)="editingSubject = null">
+          {{ 'director.cancel' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>{{ 'director.createOfferingTitle' | translate }}</h3>
+      <p class="muted small">{{ 'director.createOfferingHint' | translate }}</p>
+      <label class="field">
+        <span>{{ 'director.teacher' | translate }}</span>
+        <select [(ngModel)]="offeringTeacherId" (ngModelChange)="onOfferingTeacherChange()">
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
+          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }} ({{ t.email }})</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'director.subjectsTitle' | translate }}</span>
+        <select [(ngModel)]="offeringSubjectId">
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
+          <option *ngFor="let s of subjects" [ngValue]="s.id">{{ s.name }} ({{ s.code }})</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'teacher.courseTitle' | translate }}</span>
+        <input [(ngModel)]="offeringCourseTitle" />
+      </label>
+      <label class="field">
+        <span>{{ 'teacher.gradeLevel' | translate }}</span>
+        <input [(ngModel)]="offeringGradeLevel" />
+      </label>
+      <label class="field">
+        <span>{{ 'teacher.section' | translate }}</span>
+        <input [(ngModel)]="offeringSectionLabel" />
+      </label>
+      <button type="button" class="btn" (click)="createOfferingForTeacher()">
+        {{ 'director.createOfferingTitle' | translate }}
+      </button>
+    </div>
+
+    <div class="card">
+      <h3>{{ 'director.weeklyDirTitle' | translate }}</h3>
+      <p class="muted small">{{ 'director.weeklyDirHint' | translate : { tz: displaySchoolTimeZoneId } }}</p>
+      <label class="field">
+        <span>{{ 'director.filterOfferings' | translate }}</span>
+        <select [(ngModel)]="availabilityTeacherId" (ngModelChange)="onAvailabilityTeacherChange()">
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
+          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }}</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'director.offering' | translate }}</span>
+        <select [(ngModel)]="availabilityOfferingId">
+          <option [ngValue]="null">{{ 'common.select' | translate }}</option>
+          <option *ngFor="let o of directorOfferings" [ngValue]="o.id">
+            {{ o.subjectName }} — {{ o.courseTitle }} ({{ o.gradeLevel
+            }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
+          </option>
+        </select>
+      </label>
+      <label class="field">
+        <span>{{ 'director.day' | translate }}</span>
+        <select [(ngModel)]="dayOfWeek">
+          <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
+        </select>
+      </label>
+      <div class="row">
+        <label class="field">
+          <span>{{ 'teacher.start' | translate }}</span>
+          <input [(ngModel)]="startLocal" />
+        </label>
+        <label class="field">
+          <span>{{ 'teacher.end' | translate }}</span>
+          <input [(ngModel)]="endLocal" />
+        </label>
+      </div>
+      <button type="button" class="btn secondary" (click)="publishDirectorAvailability()">
+        {{ 'director.saveWeekly' | translate }}
+      </button>
+    </div>
+
     <div class="card wide">
-      <h3>Teacher access requests</h3>
-      <p class="muted small">Parents who asked to become teachers. After approval they must sign in again to get a teacher token.</p>
-      <button type="button" class="btn secondary" (click)="reloadRequests()">Refresh list</button>
+      <h3>{{ 'director.accessTitle' | translate }}</h3>
+      <p class="muted small">{{ 'director.accessHint' | translate }}</p>
+      <button type="button" class="btn secondary" (click)="reloadRequests()">{{ 'director.refreshList' | translate }}</button>
       <table *ngIf="accessRequests.length; else noReq">
         <thead>
           <tr>
-            <th>Applicant</th>
-            <th>Message</th>
-            <th>Status</th>
+            <th>{{ 'director.applicant' | translate }}</th>
+            <th>{{ 'director.message' | translate }}</th>
+            <th>{{ 'director.status' | translate }}</th>
             <th></th>
           </tr>
         </thead>
@@ -25,133 +228,82 @@
             <td>{{ r.message || '—' }}</td>
             <td>{{ requestStatusLabel(r.status) }}</td>
             <td>
-              <button *ngIf="r.status === 0" type="button" class="btn" (click)="approve(r.id)">Approve</button>
-              <button *ngIf="r.status === 0" type="button" class="btn danger" (click)="reject(r.id)">Reject</button>
+              <button *ngIf="r.status === 0" type="button" class="btn" (click)="approve(r.id)">
+                {{ 'director.approve' | translate }}
+              </button>
+              <button *ngIf="r.status === 0" type="button" class="btn danger" (click)="reject(r.id)">
+                {{ 'director.reject' | translate }}
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
       <ng-template #noReq>
-        <p class="muted">No requests loaded. Use Refresh or widen filters in code if needed.</p>
+        <p class="muted">{{ 'director.noRequests' | translate }}</p>
       </ng-template>
     </div>
 
-    <div class="card">
-      <h3>Subjects</h3>
+    <div class="card wide">
+      <h3>{{ 'director.visitAuditTitle' | translate }}</h3>
+      <p class="muted small">{{ 'director.visitAuditHint' | translate }}</p>
       <label class="field">
-        <span>Code</span>
-        <input [(ngModel)]="newSubjectCode" placeholder="e.g. CS101" />
+        <span>{{ 'director.studentEmailFilter' | translate }}</span>
+        <input [(ngModel)]="studentEmailFilter" type="email" autocomplete="off" />
       </label>
-      <label class="field">
-        <span>Name</span>
-        <input [(ngModel)]="newSubjectName" placeholder="e.g. Computing" />
-      </label>
-      <button type="button" class="btn" (click)="createSubject()">Add subject</button>
-      <table *ngIf="subjects.length">
+      <button type="button" class="btn secondary" (click)="reloadVisitAudit()">
+        {{ 'director.applyFilter' | translate }}
+      </button>
+      <div class="muted small" *ngIf="visitSummary() as s">
+        <span>{{ 'director.summaryTotal' | translate : { n: s.totalBookings } }}</span>
+        ·
+        <span>{{ 'director.summaryCancelled' | translate : { n: s.cancelledCount } }}</span>
+        ·
+        <span>{{ 'director.summaryActive' | translate : { n: s.activeCount } }}</span>
+      </div>
+      <table *ngIf="visitRows().length; else noVisits">
         <thead>
           <tr>
-            <th>Code</th>
-            <th>Name</th>
-            <th></th>
+            <th>{{ 'director.colCreated' | translate : { tz: displaySchoolTimeZoneId } }}</th>
+            <th>{{ 'director.colSlot' | translate : { tz: displaySchoolTimeZoneId } }}</th>
+            <th>{{ 'director.colStudent' | translate }}</th>
+            <th>{{ 'director.colParent' | translate }}</th>
+            <th>{{ 'director.colTeacher' | translate }}</th>
+            <th>{{ 'director.colStatus' | translate }}</th>
+            <th>{{ 'director.colAttendance' | translate }}</th>
+            <th>{{ 'director.colNotes' | translate }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let s of subjects">
-            <td>{{ s.code }}</td>
-            <td>{{ s.name }}</td>
+          <tr *ngFor="let v of visitRows()">
+            <td>{{ v.createdAt | date : 'medium' : displaySchoolTimeZoneId }}</td>
             <td>
-              <button type="button" class="btn secondary" (click)="startEditSubject(s)">Edit</button>
-              <button type="button" class="btn danger" (click)="deleteSubject(s)">Delete</button>
+              {{ v.startUtc | date : 'short' : displaySchoolTimeZoneId }} —
+              {{ v.endUtc | date : 'short' : displaySchoolTimeZoneId }}
             </td>
+            <td>{{ v.studentSchoolEmail }}</td>
+            <td>{{ v.parentDisplayName }}<br /><span class="muted small">{{ v.parentEmail }}</span></td>
+            <td>
+              {{ v.teacherDisplayName }}<br />
+              {{ v.subjectName }} — {{ v.courseTitle }} ({{ v.gradeLevel
+              }}{{ v.sectionLabel ? ', ' + v.sectionLabel : '' }})
+            </td>
+            <td>
+              <span *ngIf="v.isCancelled">{{ 'director.statusCancelled' | translate }}</span>
+              <span *ngIf="!v.isCancelled">{{ 'director.statusActive' | translate }}</span>
+              <ng-container *ngIf="v.isCancelled && v.cancelledAt">
+                <br /><span class="muted small">{{ v.cancelledAt | date : 'short' : displaySchoolTimeZoneId }}</span>
+              </ng-container>
+            </td>
+            <td>{{ attendanceLabel(v.attendanceStatus) }}</td>
+            <td class="small">{{ v.visitNotes || '—' }}</td>
           </tr>
         </tbody>
       </table>
-      <div *ngIf="editingSubject">
-        <h4 class="small">Edit subject</h4>
-        <label class="field">
-          <span>Code</span>
-          <input [(ngModel)]="editSubjectCode" />
-        </label>
-        <label class="field">
-          <span>Name</span>
-          <input [(ngModel)]="editSubjectName" />
-        </label>
-        <button type="button" class="btn" (click)="saveSubjectEdit()">Save</button>
-        <button type="button" class="btn secondary" (click)="editingSubject = null">Cancel</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Create offering for a teacher</h3>
-      <p class="muted small">Use section (e.g. A, C) to separate parallel groups in the same grade.</p>
-      <label class="field">
-        <span>Teacher</span>
-        <select [(ngModel)]="offeringTeacherId" (ngModelChange)="onOfferingTeacherChange()">
-          <option [ngValue]="null">Select…</option>
-          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }} ({{ t.email }})</option>
-        </select>
-      </label>
-      <label class="field">
-        <span>Subject</span>
-        <select [(ngModel)]="offeringSubjectId">
-          <option [ngValue]="null">Select…</option>
-          <option *ngFor="let s of subjects" [ngValue]="s.id">{{ s.name }} ({{ s.code }})</option>
-        </select>
-      </label>
-      <label class="field">
-        <span>Course title</span>
-        <input [(ngModel)]="offeringCourseTitle" placeholder="e.g. Computing" />
-      </label>
-      <label class="field">
-        <span>Grade level</span>
-        <input [(ngModel)]="offeringGradeLevel" placeholder="e.g. 3ro secundaria" />
-      </label>
-      <label class="field">
-        <span>Section</span>
-        <input [(ngModel)]="offeringSectionLabel" placeholder="e.g. A, C, 3ro-A" />
-      </label>
-      <button type="button" class="btn" (click)="createOfferingForTeacher()">Create offering</button>
-    </div>
-
-    <div class="card">
-      <h3>Weekly availability (any teacher)</h3>
-      <p class="muted small">Replaces all windows for the chosen offering (same as teacher self-service).</p>
-      <label class="field">
-        <span>Teacher (filter offerings)</span>
-        <select [(ngModel)]="availabilityTeacherId" (ngModelChange)="onAvailabilityTeacherChange()">
-          <option [ngValue]="null">Select…</option>
-          <option *ngFor="let t of teachers" [ngValue]="t.id">{{ t.displayName }}</option>
-        </select>
-      </label>
-      <label class="field">
-        <span>Offering</span>
-        <select [(ngModel)]="availabilityOfferingId">
-          <option [ngValue]="null">Select…</option>
-          <option *ngFor="let o of directorOfferings" [ngValue]="o.id">
-            {{ o.subjectName }} — {{ o.courseTitle }} ({{ o.gradeLevel
-            }}{{ o.sectionLabel ? ', ' + o.sectionLabel : '' }})
-          </option>
-        </select>
-      </label>
-      <label class="field">
-        <span>Day of week</span>
-        <select [(ngModel)]="dayOfWeek">
-          <option *ngFor="let d of days" [ngValue]="d">{{ d }}</option>
-        </select>
-      </label>
-      <div class="row">
-        <label class="field">
-          <span>Start</span>
-          <input [(ngModel)]="startLocal" />
-        </label>
-        <label class="field">
-          <span>End</span>
-          <input [(ngModel)]="endLocal" />
-        </label>
-      </div>
-      <button type="button" class="btn secondary" (click)="publishDirectorAvailability()">Save weekly window</button>
+      <ng-template #noVisits>
+        <p class="muted">{{ 'director.noVisits' | translate }}</p>
+      </ng-template>
     </div>
   </div>
 
   <p class="status" *ngIf="status">{{ status }}</p>
-</section>
+</div>

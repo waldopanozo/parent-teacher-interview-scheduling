@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ScheduleApiService } from '../../core/schedule-api.service';
 import { Booking, SubjectSummary, TeacherOfferingSummary } from '../../core/api.types';
 
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './teacher-dashboard.component.html',
   styleUrl: './teacher-dashboard.component.scss'
 })
@@ -15,6 +16,7 @@ export class TeacherDashboardComponent implements OnInit {
   subjects: SubjectSummary[] = [];
   offerings: TeacherOfferingSummary[] = [];
   bookings: Booking[] = [];
+  schoolTimeZoneId = 'UTC';
 
   subjectId: string | null = null;
   courseTitle = '';
@@ -33,6 +35,12 @@ export class TeacherDashboardComponent implements OnInit {
   constructor(private readonly api: ScheduleApiService) {}
 
   ngOnInit(): void {
+    this.api.catalogSchoolConfig().subscribe({
+      next: (c) => {
+        if (c.schoolTimeZoneId?.trim()) this.schoolTimeZoneId = c.schoolTimeZoneId.trim();
+      },
+      error: () => {}
+    });
     this.api.subjects().subscribe({
       next: (rows) => (this.subjects = rows),
       error: () => (this.status = 'Unable to load subjects.')
@@ -46,7 +54,11 @@ export class TeacherDashboardComponent implements OnInit {
       error: () => (this.status = 'Unable to load offerings.')
     });
     this.api.teacherBookings().subscribe({
-      next: (rows) => (this.bookings = rows),
+      next: (rows) =>
+        (this.bookings = rows.map((r) => ({
+          ...r,
+          visitNotes: r.visitNotes ?? ''
+        }))),
       error: () => (this.status = 'Unable to load bookings.')
     });
   }
@@ -54,7 +66,6 @@ export class TeacherDashboardComponent implements OnInit {
   createOffering(): void {
     this.status = null;
     if (!this.subjectId || !this.courseTitle.trim() || !this.gradeLevel.trim()) {
-      this.status = 'Subject, course title, and grade are required.';
       return;
     }
 
@@ -67,7 +78,6 @@ export class TeacherDashboardComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.status = 'Offering created.';
           this.courseTitle = '';
           this.gradeLevel = '';
           this.sectionLabel = '';
@@ -80,7 +90,6 @@ export class TeacherDashboardComponent implements OnInit {
   publishAvailability(): void {
     this.status = null;
     if (!this.availabilityOfferingId) {
-      this.status = 'Select an offering to publish weekly availability.';
       return;
     }
 
@@ -89,10 +98,24 @@ export class TeacherDashboardComponent implements OnInit {
     };
 
     this.api.replaceWeeklyAvailability(this.availabilityOfferingId, body).subscribe({
-      next: () => {
-        this.status = 'Weekly availability saved (replaces previous windows for that offering).';
-      },
+      next: () => {},
       error: (err) => (this.status = err?.error ?? 'Save failed.')
     });
+  }
+
+  saveOutcome(b: Booking): void {
+    this.status = null;
+    this.api
+      .teacherPatchBooking(b.id, {
+        attendanceStatus: b.attendanceStatus,
+        visitNotes: b.visitNotes?.trim() || null
+      })
+      .subscribe({
+        next: (updated) => {
+          const i = this.bookings.findIndex((x) => x.id === updated.id);
+          if (i >= 0) this.bookings[i] = updated;
+        },
+        error: (err) => (this.status = err?.error?.message ?? err?.error ?? 'Save failed.')
+      });
   }
 }

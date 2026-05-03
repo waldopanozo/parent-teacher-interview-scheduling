@@ -73,4 +73,22 @@ public sealed class AuthController(AuthService authService) : ControllerBase
             return NotFound();
         return Ok(dto);
     }
+
+    /// <summary>Email/password accounts only. Google-only accounts receive 400.</summary>
+    [HttpPut("password")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest body, CancellationToken ct)
+    {
+        try
+        {
+            await authService.ChangePasswordAsync(User.GetUserId(), body.CurrentPassword, body.NewPassword, ct);
+            return NoContent();
+        }
+        catch (AuthException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

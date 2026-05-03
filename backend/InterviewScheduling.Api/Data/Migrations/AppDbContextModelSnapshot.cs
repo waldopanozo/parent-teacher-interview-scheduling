@@ -82,6 +82,15 @@ namespace InterviewScheduling.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("AttendanceStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CancelledByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -112,14 +121,58 @@ namespace InterviewScheduling.Api.Data.Migrations
                     b.Property<Guid>("TeacherOfferingId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("VisitNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ParentUserId");
 
                     b.HasIndex("TeacherOfferingId", "StartUtc")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"CancelledAt\" IS NULL");
 
                     b.ToTable("Bookings");
+                });
+
+            modelBuilder.Entity("InterviewScheduling.Api.Domain.SchoolSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("LogoContentType")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<byte[]>("LogoData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SchoolTimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ThemePreset")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("UiLanguage")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByDirectorId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SchoolSettings");
                 });
 
             modelBuilder.Entity("InterviewScheduling.Api.Domain.Subject", b =>

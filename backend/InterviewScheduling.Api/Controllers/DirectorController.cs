@@ -12,8 +12,90 @@ namespace InterviewScheduling.Api.Controllers;
 [ApiController]
 [Authorize(Roles = "Director")]
 [Route("api/v1/director")]
-public sealed class DirectorController(AppDbContext db, WeeklyAvailabilityService weeklyAvailability) : ControllerBase
+public sealed class DirectorController(
+    AppDbContext db,
+    WeeklyAvailabilityService weeklyAvailability,
+    SchoolSettingsService schoolSettings,
+    BookingService bookingService) : ControllerBase
 {
+    /// <summary>Multipart body ceiling; actual file cap is <see cref="SchoolSettingsService.MaxLogoUploadBytes"/>.</summary>
+    private const long SchoolLogoMultipartSizeLimitBytes = 10 * 1024 * 1024;
+
+    [HttpGet("school-settings")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> GetSchoolSettings(CancellationToken ct)
+    {
+        var snap = await schoolSettings.GetSnapshotAsync(ct);
+        return Ok(ToDto(snap));
+    }
+
+    [HttpPut("school-settings")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> PutSchoolSettings([FromBody] UpdateSchoolSettingsRequest body,
+        CancellationToken ct)
+    {
+        try
+        {
+            await schoolSettings.UpdateSchoolSettingsAsync(User.GetUserId(), body.SchoolTimeZoneId, body.UiLanguage,
+                body.ThemePreset, ct);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
+    }
+
+    [HttpPost("school-logo")]
+    [RequestSizeLimit(SchoolLogoMultipartSizeLimitBytes)]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> UploadSchoolLogo(IFormFile? file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { message = "No file uploaded." });
+
+        await using var ms = new MemoryStream();
+        await file.CopyToAsync(ms, ct);
+        var bytes = ms.ToArray();
+        try
+        {
+            await schoolSettings.SetSchoolLogoAsync(User.GetUserId(), bytes, file.ContentType, ct);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
+    }
+
+    [HttpDelete("school-logo")]
+    [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SchoolSettingsResponseDto>> DeleteSchoolLogo(CancellationToken ct)
+    {
+        await schoolSettings.ClearSchoolLogoAsync(User.GetUserId(), ct);
+        return Ok(ToDto(await schoolSettings.GetSnapshotAsync(ct)));
+    }
+
+    private static SchoolSettingsResponseDto ToDto(
+        (string TimeZoneId, string UiLanguage, string ThemePreset, bool HasCustomLogo, long BrandingVersion,
+            DateTimeOffset? UpdatedAt, Guid? UpdatedByDirectorId) s) =>
+        new(s.TimeZoneId, s.UiLanguage, s.ThemePreset, s.HasCustomLogo, s.BrandingVersion, s.UpdatedAt,
+            s.UpdatedByDirectorId);
+
+    [HttpGet("visit-audit")]
+    [ProducesResponseType(typeof(VisitAuditPageDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<VisitAuditPageDto>> ListVisitAudit([FromQuery] string? studentSchoolEmail,
+        [FromQuery] int take = 200, CancellationToken ct = default)
+    {
+        var page = await bookingService.ListVisitAuditAsync(studentSchoolEmail, take, ct);
+        return Ok(page);
+    }
+
     [HttpGet("teachers")]
     [ProducesResponseType(typeof(IReadOnlyList<TeacherListItemDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<TeacherListItemDto>>> ListTeachers(CancellationToken ct)

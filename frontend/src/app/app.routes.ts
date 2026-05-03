@@ -13,10 +13,20 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent)
   },
   {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./pages/login/forgot-password.component').then((m) => m.ForgotPasswordComponent)
+  },
+  {
     path: 'app',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/shell/shell.component').then((m) => m.ShellComponent),
     children: [
+      {
+        path: 'account/password',
+        loadComponent: () =>
+          import('./pages/account/account-password.component').then((m) => m.AccountPasswordComponent)
+      },
       {
         path: 'parent/meeting-profile',
         canActivate: [parentRoleGuard],

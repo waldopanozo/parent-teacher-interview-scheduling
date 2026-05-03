@@ -7,25 +7,30 @@ Documentation in this repo is **English** for portfolio consistency. UI copy in 
 ## Table of contents
 
 1. [What you get](#what-you-get)
-2. [Roles](#roles)
-3. [Authentication](#authentication)
-4. [Demo accounts (Development only)](#demo-accounts-development-only)
-5. [Parent meeting registration](#parent-meeting-registration)
-6. [Run with Docker (recommended)](#run-with-docker-recommended)
-7. [Environment variables](#environment-variables)
-8. [Google OAuth setup](#google-oauth-setup)
-9. [Local development (optional)](#local-development-optional)
-10. [Data model highlights](#data-model-highlights)
-11. [API](#api)
-12. [Further reading](#further-reading)
-13. [Testing](#testing)
-14. [Stack & CI](#stack--ci)
-15. [License](#license)
+2. [Recent change log (git)](#recent-change-log-git)
+3. [Roles](#roles)
+4. [Authentication](#authentication)
+5. [UI, branding, and passwords](#ui-branding-and-passwords)
+6. [Demo accounts (Development only)](#demo-accounts-development-only)
+7. [Parent meeting registration](#parent-meeting-registration)
+8. [Run with Docker (recommended)](#run-with-docker-recommended)
+9. [Environment variables](#environment-variables)
+10. [Google OAuth setup](#google-oauth-setup)
+11. [Local development (optional)](#local-development-optional)
+12. [Data model highlights](#data-model-highlights)
+13. [API](#api)
+14. [Further reading](#further-reading)
+15. [Testing](#testing)
+16. [Stack & CI](#stack--ci)
+17. [Engineering notebook](#engineering-notebook)
+18. [License](#license)
 
 ## What you get
 
 - **Sign-in options**: **Google Sign-In** (validated `id_token`) and **email + password** (`POST /api/v1/auth/register` and `POST /api/v1/auth/email-login`), both returning the same short-lived **JWT** for REST calls.
-- **Login / registration UI**: split-panel screen (login ↔ register), **Google Fonts** (Syne + Outfit), indigo-focused palette; only **Google** is offered as an OAuth provider (no other social buttons).
+- **Login / registration UI**: centered **bento-style** card, tabbed sign-in vs register, **Google Fonts** (Syne + Outfit), school-driven theme colors; **Forgot password** help page (`/forgot-password`); only **Google** as OAuth (no other social buttons).
+- **Signed-in shell**: left **sidebar** (Donezo-style layout), top bar with profile summary, role-specific navigation; dashboards use rounded **cards** with light shadows.
+- **School branding (Director)**: `themePreset` palettes and optional **logo** (`GET /api/v1/catalog/school-config`, `school-logo`); SPA applies CSS variables from login through all routes.
 - **PostgreSQL** + **EF Core** migrations (applied automatically on API startup when using Docker or a normal host).
 - **Angular** SPA (lazy routes) behind **nginx**, with `/api` reverse-proxied to the API container.
 - **Three roles**: Parent, Teacher, Director (see [docs/flows-and-roles.md](docs/flows-and-roles.md)).
@@ -33,6 +38,15 @@ Documentation in this repo is **English** for portfolio consistency. UI copy in 
 - **Parent meeting registration**: student school email, attendee name, and relationship to the student — required before booking (see below).
 
 This project is aligned with a modern **.NET + Angular** profile (REST, institutional Google sign-in, PostgreSQL, Docker) similar to expectations in external postings such as [Senior Full Stack Developer (.NET Core & Angular)](https://talent.latinolegends.com/jobs/7030828-senior-full-stack-developer-net-core-angular).
+
+## Recent change log (git)
+
+Day-scoped git listings:
+
+- [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md) — 2026-04-30 merges and MVP/auth/seed work.
+- [docs/changelog-2026-05-02.md](docs/changelog-2026-05-02.md) — 2026-05-02 bookings, school settings, theme/logo.
+
+Use `git log --oneline --since='YYYY-MM-DD' --until='YYYY-MM-DD'` to reproduce any range locally.
 
 ## Roles
 
@@ -57,6 +71,35 @@ See [docs/flows-and-roles.md](docs/flows-and-roles.md) for step-by-step flows an
 
 **Environments:** OpenAPI (`/openapi/v1.json`) is mapped in **Development** only. Demo user seeding runs only in **Development** (see below).
 
+## Engineering notebook
+
+### Architecture and ADRs
+
+- **Containers and data flow**: [docs/architecture.md](docs/architecture.md) (includes a Mermaid diagram: browser → nginx → API → PostgreSQL, plus Google token validation).
+- **Decision log**: [docs/adr/README.md](docs/adr/README.md) — integration testing strategy, booking cancellation/audit rules, and HTTP observability trade-offs.
+
+### Security posture (demo scope)
+
+- **JWT**: HS256 access tokens; signing key from configuration (`Jwt__SigningKey` / Compose). **Rotate** keys and lengths for any public deployment.
+- **Passwords**: **BCrypt** for email/password accounts; Google-only users have **no** local password hash (`hasPasswordLogin` is false).
+- **Google tokens**: API validates **`id_token`** server-side; the SPA never sends Google **secrets** to this backend.
+- **CORS**: default policy allows the nginx origin (`Cors:AllowedOrigins`); tighten for production hosts only.
+- **Rate limiting / bot protection**: **not implemented** in this sample (would normally sit at API gateway or reverse proxy). Documented here so reviewers do not assume it exists.
+- **Secrets**: use a vault or managed secrets in real environments; `.env` in this repo is for **local/demo** only.
+
+### Observability and health
+
+- **`GET /health`**: database-backed health check (EF Core). Same path in Docker and tests; see [docs/api-reference.md](docs/api-reference.md).
+- **`X-Request-Id`**: optional inbound header; the API **echoes** it and adds a logging **scope** so structured logs for that request can be correlated.
+- **Structured business log**: successful **`POST /api/v1/parent/bookings`** emits a **`BookingCreated`** `LogInformation` event with ids and `startUtc` (see ADR 003).
+
+## UI, branding, and passwords
+
+- **Themes and logo**: Directors set **color preset** and optional **logo** in **School settings**; the SPA reads anonymous `GET /api/v1/catalog/school-config` on startup and serves `school-logo` when present (otherwise a default SVG asset).
+- **Profile flag**: JWT-backed profile responses include **`hasPasswordLogin`**. It is **true** for accounts that registered or can sign in with email + password; **false** for Google-only users.
+- **Change password (signed in)**: `PUT /api/v1/auth/password` with `currentPassword` and `newPassword` (min 8). The Angular route is **`/app/account/password`** (sidebar **Account → Change password** when applicable).
+- **Forgot password / recovery**: There is **no** automated email reset in this demo. The SPA route **`/forgot-password`** explains options: use **Change password** if you already use email login, use **Google** if you are Google-only, or contact the school.
+
 ## Demo accounts (Development only)
 
 When `ASPNETCORE_ENVIRONMENT` is **Development**, startup seeds three users **if their emails are not already present** (password for all: **`password`**):
@@ -75,7 +118,7 @@ These accounts are **not** created in **Production** or in the **Testing** host 
 
 ## Parent meeting registration
 
-Parents authenticate with **their own** Google account. Before booking any slot they must save:
+Parents authenticate with **their own** Google account or **school email + password** (if enabled). Before booking any slot they must save:
 
 1. **Student school email** — institutional email identifying the child the interview is about (may differ from the parent’s Google email).
 2. **Interview attendee name** — full name of the adult who will attend.
@@ -102,8 +145,10 @@ Edit `.env` (see [Environment variables](#environment-variables)). At minimum se
 From the repository root:
 
 ```bash
-docker compose --env-file .env up --build
+docker compose up --build
 ```
+
+Compose reads a file named `.env` in the same directory as `docker-compose.yml` automatically for variable substitution; you only need `--env-file` if you use another path or filename.
 
 On **Linux**, the Compose file sets `network: host` for **image builds** so `dotnet restore` / `npm ci` use the host network (helps avoid TLS issues to NuGet/npm through the default Docker bridge).
 
@@ -142,6 +187,8 @@ These are read by **Docker Compose** and mapped into `Auth__*`, `Google__*`, etc
 | `ALLOW_PERSONAL_GOOGLE_EMAILS` | When domains are **non-empty**, set `true` to also allow `@gmail.com` / `@googlemail.com`. |
 | `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Teacher** on first Google sign-in or on email/password **register**. |
 | `DIRECTOR_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Director** on first Google sign-in or on email/password **register**. |
+| `SCHEDULING_MAX_SCHOOL_LOGO_KB` | **Optional** (Docker). Maps to `Scheduling__MaxSchoolLogoKb` — max logo file size (KB) for `POST /api/v1/director/school-logo`. Default **1024**; API clamps between **64** and **8192**. |
+| `E2E_STACK_URL` | **Optional** (local Playwright only). Base URL of the nginx front-end when running **demo-account** e2e tests against Docker (e.g. `http://127.0.0.1:3456`). Not passed into containers by default; read from `.env` by `frontend/playwright.config.ts`. See [docs/testing.md](docs/testing.md). |
 
 **Typical combinations**
 
@@ -178,12 +225,17 @@ If you change code frequently without rebuilding Docker images:
 
 Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common paths:
 
+- `GET /health` — aggregate health (includes database check); **no JWT**.
 - `POST /api/v1/auth/google` — exchange Google `id_token` for JWT.
 - `POST /api/v1/auth/register` — create account with email + password + display name; returns JWT.
 - `POST /api/v1/auth/email-login` — sign in with email + password; returns JWT.
-- `GET /api/v1/auth/me` — current user profile (JWT required).
+- `GET /api/v1/auth/me` — current user profile (JWT required), including `hasPasswordLogin`.
+- `PUT /api/v1/auth/password` — change password for email/password accounts (JWT required).
+- `GET /api/v1/catalog/school-config` — public school locale + branding metadata.
+- `GET /api/v1/catalog/school-logo` — custom logo bytes when configured.
 - `GET /api/v1/catalog/teacher-offerings` — bookable offerings (authenticated).
-- `POST /api/v1/parent/bookings` — reserve a slot.
+- `POST /api/v1/parent/bookings` — reserve a slot (one per parent per school day).
+- `DELETE /api/v1/parent/bookings/{id}` — parent cancels own booking **before** the interview day (school calendar); not allowed on the day of the interview.
 - `POST /api/v1/teacher-access-requests` — Parent submits teacher access request.
 - `GET|POST /api/v1/director/...` — Director operations (requests, subjects, offerings, weekly availability).
 
@@ -194,17 +246,29 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 | [docs/flows-and-roles.md](docs/flows-and-roles.md) | User journeys, section labels, post-approval re-login. |
 | [docs/api-reference.md](docs/api-reference.md) | REST v1 paths and short descriptions. |
 | [docs/testing.md](docs/testing.md) | How to run unit, integration, and e2e tests locally; what CI runs. |
+| [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md) | Commit listing for 2026-04-30 and notes on later features. |
+| [docs/changelog-2026-05-02.md](docs/changelog-2026-05-02.md) | Commit listing for 2026-05-02 (bookings, settings, theme/logo). |
+| [docs/architecture.md](docs/architecture.md) | Container-level diagram (Mermaid) and performance notes. |
+| [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records (tests, bookings, HTTP ops). |
 | [frontend/README.md](frontend/README.md) | Optional local `npm start`, proxy, and frontend test commands. |
 
 ## Testing
 
-See [docs/testing.md](docs/testing.md). Summary: **`dotnet test`** on `InterviewScheduling.Api.Tests` (in-memory integration + validation unit tests), **`npm run build`** + **`npm run test:e2e`** (Playwright smoke on the built SPA).
+See [docs/testing.md](docs/testing.md) for the full matrix (unit, integration, Playwright smoke vs full stack).
+
+**Short version**
+
+1. **Backend**: `cd backend/InterviewScheduling.Api.Tests && dotnet test`
+2. **Frontend e2e (smoke, no Docker API)**: `cd frontend && npm run build && npm run test:e2e` — Playwright starts a static server on **4179**; demo-account tests are **skipped**.
+3. **Frontend e2e including demo accounts**: Start the stack from the repo root with **`docker compose up --build`**, put **`E2E_STACK_URL=http://127.0.0.1:3456`** in `.env` (same folder as Compose) or in `frontend/.env`, then **`npm run test:e2e:stack`** in `frontend/` (or `make frontend-e2e-stack` from the repo root after `npm install` in `frontend/`).
+
+Compose picks up `.env` next to `docker-compose.yml` automatically; Playwright loads that file (and `frontend/.env`) via `dotenv` in `playwright.config.ts`. With Docker + `E2E_STACK_URL`, Playwright also runs **flow** specs (registration, booking/cancel, teacher offering, director subject CRUD, teacher-access approval); see [docs/testing.md](docs/testing.md).
 
 ## Stack & CI
 
-- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords.
+- **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords, **`GET /health`** (DB check), **`X-Request-Id`** middleware, structured log on successful parent booking creation.
 - **Frontend**: Angular (standalone, lazy routes), Google Identity Services, Syne + Outfit (Google Fonts) on the sign-in experience.
-- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`**. Karma is not run in CI; use `npm test` locally when changing Angular services or components.
+- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`** (demo Playwright tests skip without `E2E_STACK_URL`). Karma is not run in CI; use `npm test` locally when changing Angular services or components.
 
 ## License
 

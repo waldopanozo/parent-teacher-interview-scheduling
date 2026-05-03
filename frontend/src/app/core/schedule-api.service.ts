@@ -4,11 +4,14 @@ import { environment } from '../../environments/environment';
 import {
   Booking,
   ParentMeetingProfile,
+  SchoolPublicConfig,
+  SchoolSettingsResponse,
   Slot,
   SubjectSummary,
   TeacherAccessRequestListItem,
   TeacherListItem,
-  TeacherOfferingSummary
+  TeacherOfferingSummary,
+  VisitAuditPage
 } from './api.types';
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +22,10 @@ export class ScheduleApiService {
 
   subjects() {
     return this.http.get<SubjectSummary[]>(`${this.base}/subjects`);
+  }
+
+  catalogSchoolConfig() {
+    return this.http.get<SchoolPublicConfig>(`${this.base}/catalog/school-config`);
   }
 
   catalogOfferings() {
@@ -36,6 +43,10 @@ export class ScheduleApiService {
 
   book(body: { teacherOfferingId: string; startUtc: string }) {
     return this.http.post<Booking>(`${this.base}/parent/bookings`, body);
+  }
+
+  cancelParentBooking(bookingId: string) {
+    return this.http.delete<void>(`${this.base}/parent/bookings/${bookingId}`);
   }
 
   submitTeacherAccessRequest(body: { message?: string }) {
@@ -73,6 +84,45 @@ export class ScheduleApiService {
 
   teacherBookings() {
     return this.http.get<Booking[]>(`${this.base}/teacher/bookings`);
+  }
+
+  teacherPatchBooking(
+    bookingId: string,
+    body: { attendanceStatus: number; visitNotes?: string | null }
+  ) {
+    return this.http.patch<Booking>(`${this.base}/teacher/bookings/${bookingId}`, body);
+  }
+
+  directorSchoolSettings() {
+    return this.http.get<SchoolSettingsResponse>(`${this.base}/director/school-settings`);
+  }
+
+  directorUpdateSchoolSettings(body: {
+    schoolTimeZoneId: string;
+    uiLanguage: string;
+    themePreset: string;
+  }) {
+    return this.http.put<SchoolSettingsResponse>(`${this.base}/director/school-settings`, body);
+  }
+
+  directorUploadSchoolLogo(file: File) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<SchoolSettingsResponse>(`${this.base}/director/school-logo`, fd);
+  }
+
+  directorDeleteSchoolLogo() {
+    return this.http.delete<SchoolSettingsResponse>(`${this.base}/director/school-logo`);
+  }
+
+  changePassword(body: { currentPassword: string; newPassword: string }) {
+    return this.http.put<void>(`${this.base}/auth/password`, body);
+  }
+
+  directorVisitAudit(studentSchoolEmail?: string, take = 200) {
+    let params = new HttpParams().set('take', String(take));
+    if (studentSchoolEmail?.trim()) params = params.set('studentSchoolEmail', studentSchoolEmail.trim());
+    return this.http.get<VisitAuditPage>(`${this.base}/director/visit-audit`, { params });
   }
 
   directorTeacherAccessRequests(status?: string) {
