@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/** True when `playwright.config.ts` loaded `E2E_STACK_URL` from env / `.env`. */
-export const fullStack = !!process.env['E2E_STACK_URL']?.trim();
+/** True when `playwright.config.ts` loaded a non-empty `E2E_STACK_URL` from env / `.env`. */
+export const fullStack = !!(process.env['E2E_STACK_URL']?.trim() ?? '');
 
 export function skipWithoutFullStack(): void {
   test.skip(

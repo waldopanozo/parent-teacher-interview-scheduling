@@ -41,6 +41,8 @@ services:
       Cors__AllowedOrigins__0: http://localhost:3456
       # Ensures demo accounts + subjects seed even if ASPNETCORE_ENVIRONMENT is not Development (still blocked in Production).
       Seed__DemoUsers: ${SEED_DEMO_USERS:-true}
+      # Each API start: set SchoolSettings.UiLanguage from Scheduling__UiLanguage (fixes old volumes still on es). Set SEED_APPLY_CONFIG_UI_LANGUAGE=false to keep DB language across restarts.
+      Seed__ApplyConfigUiLanguageToSchool: ${SEED_APPLY_CONFIG_UI_LANGUAGE:-true}
     depends_on:
       db:
         condition: service_healthy

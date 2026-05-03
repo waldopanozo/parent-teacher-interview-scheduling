@@ -20,10 +20,11 @@ Documentation in this repo is **English** for portfolio consistency. UI copy in 
 12. [Data model highlights](#data-model-highlights)
 13. [API](#api)
 14. [Further reading](#further-reading)
-15. [Testing](#testing)
-16. [Stack & CI](#stack--ci)
-17. [Engineering notebook](#engineering-notebook)
-18. [License](#license)
+15. [Showcase](#showcase)
+16. [Testing](#testing)
+17. [Stack & CI](#stack--ci)
+18. [Engineering notebook](#engineering-notebook)
+19. [License](#license)
 
 ## What you get
 
@@ -251,6 +252,29 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 | [docs/architecture.md](docs/architecture.md) | Container-level diagram (Mermaid) and performance notes. |
 | [docs/adr/README.md](docs/adr/README.md) | Architecture Decision Records (tests, bookings, HTTP ops). |
 | [frontend/README.md](frontend/README.md) | Optional local `npm start`, proxy, and frontend test commands. |
+| [docs/showcase/index.html](docs/showcase/index.html) | Static gallery (same screenshots and video as below); open via a local static server if `file://` blocks the WebM player. |
+
+## Showcase
+
+Screenshots and a short **walkthrough** are produced by Playwright into [`docs/showcase/assets/`](docs/showcase/assets/). Regenerate anytime from `frontend/` with **`npm run capture:showcase`**, or from the repo root with **`make frontend-showcase`** (after `npm install` in `frontend/`). Parent and teacher frames require a running Docker stack and **`E2E_STACK_URL`** (see [Testing](#testing)).
+
+**Sign-in**
+
+![Sign-in screen](docs/showcase/assets/01-login.png)
+
+**Forgot password**
+
+![Forgot password help](docs/showcase/assets/02-forgot-password.png)
+
+**Parent workspace** (demo stack)
+
+![Parent dashboard](docs/showcase/assets/03-parent-dashboard.png)
+
+**Teacher workspace** (demo stack)
+
+![Teacher dashboard](docs/showcase/assets/04-teacher-dashboard.png)
+
+**Walkthrough (WebM)** — GitHub’s README view does not embed video; open or download **[`walkthrough.webm`](docs/showcase/assets/walkthrough.webm)** in Chrome, Edge, or Firefox, or use the gallery page linked above.
 
 ## Testing
 

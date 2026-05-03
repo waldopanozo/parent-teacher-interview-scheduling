@@ -12,10 +12,13 @@ public static class DbSeeder
 
     /// <param name="configDefaultTimeZoneId">Fallback IANA id from configuration when no row exists yet.</param>
     public static async Task SeedAsync(AppDbContext db, bool seedDemoPasswordUsers, ILogger logger,
-        string configDefaultTimeZoneId, string configDefaultUiLanguage, string configDefaultThemePreset)
+        string configDefaultTimeZoneId, string configDefaultUiLanguage, string configDefaultThemePreset,
+        bool applyConfigUiLanguageToSchool)
     {
         await EnsureSchoolSettingsAsync(db, configDefaultTimeZoneId, configDefaultUiLanguage, configDefaultThemePreset,
             logger);
+        if (applyConfigUiLanguageToSchool)
+            await SyncSchoolUiLanguageFromConfigAsync(db, configDefaultUiLanguage, logger);
 
         var subjectsAdded = await SeedSubjectsIfEmptyAsync(db);
         if (subjectsAdded > 0)
@@ -157,6 +160,41 @@ public static class DbSeeder
         return added;
     }
 
+    private static string NormalizeSeedUiLanguage(string? raw)
+    {
+        var lang = string.IsNullOrWhiteSpace(raw) ? "en" : raw.Trim();
+        if (!lang.Equals("es", StringComparison.OrdinalIgnoreCase))
+            lang = "en";
+        return lang;
+    }
+
+    /// <summary>
+    /// Updates the singleton school row so <c>UiLanguage</c> matches configured <c>Scheduling:UiLanguage</c>.
+    /// Use when an old DB volume still has Spanish but Compose pins <c>Scheduling__UiLanguage=en</c>.
+    /// </summary>
+    private static async Task SyncSchoolUiLanguageFromConfigAsync(AppDbContext db, string configDefaultUiLanguage,
+        ILogger logger)
+    {
+        var lang = NormalizeSeedUiLanguage(configDefaultUiLanguage);
+        var row = await db.SchoolSettings.FirstOrDefaultAsync(x => x.Id == SchoolSettingsService.SingletonId);
+        if (row is null)
+        {
+            logger.LogWarning("School settings row missing; cannot sync UiLanguage from config.");
+            return;
+        }
+
+        if (string.Equals(row.UiLanguage, lang, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var previous = row.UiLanguage;
+        row.UiLanguage = lang;
+        row.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+        logger.LogInformation(
+            "Synced school UiLanguage from {Previous} to {Lang} (Seed:ApplyConfigUiLanguageToSchool).",
+            previous, lang);
+    }
+
     private static async Task EnsureSchoolSettingsAsync(AppDbContext db, string configDefaultTimeZoneId,
         string configDefaultUiLanguage, string configDefaultThemePreset, ILogger logger)
     {
@@ -165,9 +203,7 @@ public static class DbSeeder
             return;
 
         var tz = string.IsNullOrWhiteSpace(configDefaultTimeZoneId) ? "UTC" : configDefaultTimeZoneId.Trim();
-        var lang = string.IsNullOrWhiteSpace(configDefaultUiLanguage) ? "en" : configDefaultUiLanguage.Trim();
-        if (!lang.Equals("es", StringComparison.OrdinalIgnoreCase))
-            lang = "en";
+        var lang = NormalizeSeedUiLanguage(configDefaultUiLanguage);
         var theme = string.IsNullOrWhiteSpace(configDefaultThemePreset)
             ? SchoolThemePreset.Default
             : SchoolThemePreset.Normalize(configDefaultThemePreset);
