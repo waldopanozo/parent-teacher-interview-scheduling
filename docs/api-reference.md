@@ -70,7 +70,7 @@ All require role **Director**.
 | PUT | `/api/v1/director/teacher-offerings/{offeringId}/weekly-availability` | Same body as teacher weekly PUT; any offering. |
 | GET | `/api/v1/director/school-settings` | Time zone, UI language, `themePreset`, logo flags, audit fields. |
 | PUT | `/api/v1/director/school-settings` | Body: `schoolTimeZoneId`, `uiLanguage`, `themePreset`. |
-| POST | `/api/v1/director/school-logo` | Multipart field **`file`** (PNG/JPEG/SVG/WebP, size limit applies). |
+| POST | `/api/v1/director/school-logo` | Multipart field **`file`** (PNG/JPEG/SVG/WebP). Max file size: **`Scheduling:MaxSchoolLogoKb`** (kilobytes, default 1024 in `appsettings.json`, 2048 in `appsettings.Testing.json`; clamped 64–8192). |
 | DELETE | `/api/v1/director/school-logo` | Remove custom logo (SPA falls back to default). |
 
 ## Booking payload shapes

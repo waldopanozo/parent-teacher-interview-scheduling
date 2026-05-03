@@ -29,6 +29,7 @@
     "@angular/cli": "^19.2.25",
     "@angular/compiler-cli": "^19.2.0",
     "@playwright/test": "^1.50.1",
+    "dotenv": "^16.4.7",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.6.0",
     "karma": "~6.4.0",

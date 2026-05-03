@@ -149,7 +149,7 @@
     "themePreset": "Paleta de colores",
     "themePresetHint": "Se aplica al inicio de sesión y a todas las pantallas para todos los usuarios.",
     "logoTitle": "Logo del centro",
-    "logoHint": "PNG, JPEG, SVG o WebP hasta 512 KB. Visible en el login y en la cabecera.",
+    "logoHint": "PNG, JPEG, SVG o WebP. El tamaño máximo lo define la configuración del servidor (véase README / variables de entorno).",
     "uploadLogo": "Subir logo",
     "removeLogo": "Quitar logo personalizado",
     "saveSettings": "Guardar configuración del colegio",

@@ -10,7 +10,12 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
 {
     public static readonly Guid SingletonId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-    public const int MaxLogoBytes = 512 * 1024;
+    private const int MinLogoKb = 64;
+    private const int MaxLogoKbCeiling = 8192;
+
+    /// <summary>Effective max logo file size in bytes (from <see cref="SchedulingOptions.MaxSchoolLogoKb"/>).</summary>
+    public int MaxLogoUploadBytes =>
+        Math.Clamp(fallbackOptions.Value.MaxSchoolLogoKb, MinLogoKb, MaxLogoKbCeiling) * 1024;
 
     private static readonly HashSet<string> SupportedUiLanguages = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -149,8 +154,9 @@ public sealed class SchoolSettingsService(AppDbContext db, IOptions<SchedulingOp
     {
         if (imageBytes.Length == 0)
             throw new ArgumentException("Logo file is empty.");
-        if (imageBytes.Length > MaxLogoBytes)
-            throw new ArgumentException($"Logo must be at most {MaxLogoBytes / 1024} KB.");
+        var maxBytes = MaxLogoUploadBytes;
+        if (imageBytes.Length > maxBytes)
+            throw new ArgumentException($"Logo must be at most {maxBytes / 1024} KB.");
         var ctNorm = contentType.Trim().ToLowerInvariant();
         if (!SupportedLogoContentTypes.Contains(ctNorm))
             throw new ArgumentException("Logo must be PNG, JPEG, SVG, or WebP.");

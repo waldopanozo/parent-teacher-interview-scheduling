@@ -149,7 +149,7 @@
     "themePreset": "Color palette",
     "themePresetHint": "Applies to the login page and all areas after sign-in for every user.",
     "logoTitle": "School logo",
-    "logoHint": "PNG, JPEG, SVG or WebP up to 512 KB. Shown on login and in the app header.",
+    "logoHint": "PNG, JPEG, SVG or WebP. Maximum file size is configured on the server (see README / deployment env).",
     "uploadLogo": "Upload logo",
     "removeLogo": "Remove custom logo",
     "saveSettings": "Save school settings",

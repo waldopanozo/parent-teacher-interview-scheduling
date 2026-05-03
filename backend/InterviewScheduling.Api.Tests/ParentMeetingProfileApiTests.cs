@@ -69,6 +69,7 @@ public sealed class ParentMeetingProfileApiTests : IClassFixture<ApiWebApplicati
         meRes.EnsureSuccessStatusCode();
         using var meDoc = JsonDocument.Parse(await meRes.Content.ReadAsStringAsync());
         Assert.True(meDoc.RootElement.GetProperty("meetingProfileComplete").GetBoolean());
+        Assert.False(meDoc.RootElement.GetProperty("hasPasswordLogin").GetBoolean());
     }
 
     [Fact]

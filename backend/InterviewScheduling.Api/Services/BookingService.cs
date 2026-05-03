@@ -212,6 +212,7 @@ public sealed class BookingService(
         var rows = await db.Bookings.AsNoTracking()
             .Include(b => b.Parent)
             .Include(b => b.TeacherOffering).ThenInclude(o => o.Subject)
+            .Include(b => b.TeacherOffering).ThenInclude(o => o.Teacher)
             .Where(b => b.TeacherOffering.TeacherUserId == teacherUserId && b.CancelledAt == null)
             .OrderBy(b => b.StartUtc)
             .ToListAsync(ct);

@@ -18,6 +18,9 @@ public sealed class DirectorController(
     SchoolSettingsService schoolSettings,
     BookingService bookingService) : ControllerBase
 {
+    /// <summary>Multipart body ceiling; actual file cap is <see cref="SchoolSettingsService.MaxLogoUploadBytes"/>.</summary>
+    private const long SchoolLogoMultipartSizeLimitBytes = 10 * 1024 * 1024;
+
     [HttpGet("school-settings")]
     [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<SchoolSettingsResponseDto>> GetSchoolSettings(CancellationToken ct)
@@ -46,7 +49,7 @@ public sealed class DirectorController(
     }
 
     [HttpPost("school-logo")]
-    [RequestSizeLimit(SchoolSettingsService.MaxLogoBytes + 65_536)]
+    [RequestSizeLimit(SchoolLogoMultipartSizeLimitBytes)]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(SchoolSettingsResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

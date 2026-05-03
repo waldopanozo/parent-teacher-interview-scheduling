@@ -16,4 +16,7 @@ public sealed class SchedulingOptions
     public string ThemePreset { get; set; } = "default";
 
     public int SlotLengthMinutes { get; set; } = 15;
+
+    /// <summary>Maximum school logo upload size for <c>POST /director/school-logo</c> (kilobytes). Clamped at runtime (64–8192).</summary>
+    public int MaxSchoolLogoKb { get; set; } = 1024;
 }

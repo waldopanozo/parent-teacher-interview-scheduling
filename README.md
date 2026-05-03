@@ -40,7 +40,12 @@ This project is aligned with a modern **.NET + Angular** profile (REST, institut
 
 ## Recent change log (git)
 
-A day-scoped commit listing for **2026-04-30** (and notes on later history) lives in [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md). Use `git log --oneline --since='2026-04-30' --until='2026-05-01'` to reproduce the table locally.
+Day-scoped git listings:
+
+- [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md) — 2026-04-30 merges and MVP/auth/seed work.
+- [docs/changelog-2026-05-02.md](docs/changelog-2026-05-02.md) — 2026-05-02 bookings, school settings, theme/logo.
+
+Use `git log --oneline --since='YYYY-MM-DD' --until='YYYY-MM-DD'` to reproduce any range locally.
 
 ## Roles
 
@@ -117,8 +122,10 @@ Edit `.env` (see [Environment variables](#environment-variables)). At minimum se
 From the repository root:
 
 ```bash
-docker compose --env-file .env up --build
+docker compose up --build
 ```
+
+Compose reads a file named `.env` in the same directory as `docker-compose.yml` automatically for variable substitution; you only need `--env-file` if you use another path or filename.
 
 On **Linux**, the Compose file sets `network: host` for **image builds** so `dotnet restore` / `npm ci` use the host network (helps avoid TLS issues to NuGet/npm through the default Docker bridge).
 
@@ -157,6 +164,8 @@ These are read by **Docker Compose** and mapped into `Auth__*`, `Google__*`, etc
 | `ALLOW_PERSONAL_GOOGLE_EMAILS` | When domains are **non-empty**, set `true` to also allow `@gmail.com` / `@googlemail.com`. |
 | `TEACHER_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Teacher** on first Google sign-in or on email/password **register**. |
 | `DIRECTOR_BOOTSTRAP_EMAILS` | Comma-separated emails that get **Director** on first Google sign-in or on email/password **register**. |
+| `SCHEDULING_MAX_SCHOOL_LOGO_KB` | **Optional** (Docker). Maps to `Scheduling__MaxSchoolLogoKb` — max logo file size (KB) for `POST /api/v1/director/school-logo`. Default **1024**; API clamps between **64** and **8192**. |
+| `E2E_STACK_URL` | **Optional** (local Playwright only). Base URL of the nginx front-end when running **demo-account** e2e tests against Docker (e.g. `http://127.0.0.1:3456`). Not passed into containers by default; read from `.env` by `frontend/playwright.config.ts`. See [docs/testing.md](docs/testing.md). |
 
 **Typical combinations**
 
@@ -214,17 +223,26 @@ Summary endpoints live in [docs/api-reference.md](docs/api-reference.md). Common
 | [docs/api-reference.md](docs/api-reference.md) | REST v1 paths and short descriptions. |
 | [docs/testing.md](docs/testing.md) | How to run unit, integration, and e2e tests locally; what CI runs. |
 | [docs/changelog-2026-04-30.md](docs/changelog-2026-04-30.md) | Commit listing for 2026-04-30 and notes on later features. |
+| [docs/changelog-2026-05-02.md](docs/changelog-2026-05-02.md) | Commit listing for 2026-05-02 (bookings, settings, theme/logo). |
 | [frontend/README.md](frontend/README.md) | Optional local `npm start`, proxy, and frontend test commands. |
 
 ## Testing
 
-See [docs/testing.md](docs/testing.md). Summary: **`dotnet test`** on `InterviewScheduling.Api.Tests` (in-memory integration + validation unit tests), **`npm run build`** + **`npm run test:e2e`** (Playwright smoke on the built SPA).
+See [docs/testing.md](docs/testing.md) for the full matrix (unit, integration, Playwright smoke vs full stack).
+
+**Short version**
+
+1. **Backend**: `cd backend/InterviewScheduling.Api.Tests && dotnet test`
+2. **Frontend e2e (smoke, no Docker API)**: `cd frontend && npm run build && npm run test:e2e` — Playwright starts a static server on **4179**; demo-account tests are **skipped**.
+3. **Frontend e2e including demo accounts**: Start the stack from the repo root with **`docker compose up --build`**, put **`E2E_STACK_URL=http://127.0.0.1:3456`** in `.env` (same folder as Compose) or in `frontend/.env`, then `cd frontend && npm run build && npm run test:e2e`.
+
+Compose picks up `.env` next to `docker-compose.yml` automatically; Playwright loads that file (and `frontend/.env`) via `dotenv` in `playwright.config.ts`. With Docker + `E2E_STACK_URL`, Playwright also runs **flow** specs (registration, booking/cancel, teacher offering, director subject CRUD, teacher-access approval); see [docs/testing.md](docs/testing.md).
 
 ## Stack & CI
 
 - **Backend**: ASP.NET Core 10, EF Core, PostgreSQL (Npgsql), Google ID token validation, JWT bearer, BCrypt for local passwords.
 - **Frontend**: Angular (standalone, lazy routes), Google Identity Services, Syne + Outfit (Google Fonts) on the sign-in experience.
-- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`**. Karma is not run in CI; use `npm test` locally when changing Angular services or components.
+- **CI**: [`.github/workflows/build.yml`](.github/workflows/build.yml) on **push** to **`main`**: `dotnet test` (backend test project), `npm ci`, `npm run build`, Playwright browser install, **`npm run test:e2e`** (demo Playwright tests skip without `E2E_STACK_URL`). Karma is not run in CI; use `npm test` locally when changing Angular services or components.
 
 ## License
 

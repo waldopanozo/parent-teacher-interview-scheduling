@@ -37,6 +37,7 @@ services:
       Scheduling__SchoolTimeZoneId: America/New_York
       Scheduling__UiLanguage: en
       Scheduling__ThemePreset: default
+      Scheduling__MaxSchoolLogoKb: ${SCHEDULING_MAX_SCHOOL_LOGO_KB:-1024}
       Cors__AllowedOrigins__0: http://localhost:3456
       # Ensures demo accounts + subjects seed even if ASPNETCORE_ENVIRONMENT is not Development (still blocked in Production).
       Seed__DemoUsers: ${SEED_DEMO_USERS:-true}
