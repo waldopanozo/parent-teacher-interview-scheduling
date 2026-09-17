@@ -1,9 +1,8 @@
 name: build
 
 on:
-  push:
-    branches:
-      - main
+  # Solo manual: evita consumo del cupo gratuito de GitHub Actions.
+  workflow_dispatch:
 
 jobs:
   backend:
